@@ -1,209 +1,204 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowRight, Building2, CheckCircle2, Compass, Ruler } from 'lucide-react';
+import { ArrowRight, Building2, CheckCircle2, MapPin, Phone, X } from 'lucide-react';
 import { DEMO_MEDIA } from '../../assets/demoMedia';
 import { DemoReturnBar, ResilientImage } from '../../components/DemoChrome';
-import { calculateArchitectureEstimate } from '../../utils/demoLogic';
+import { calculateConstructionEstimatePkr, formatPkr } from '../../utils/demoLogic';
 
-const ARCH_PROJECTS = [
+interface BuildProject {
+  id: string;
+  title: string;
+  category: 'Residential' | 'Commercial';
+  location: string;
+  area: string;
+  budgetPkr: string;
+  image: string;
+  summary: string;
+  specs: string;
+}
+
+const PROJECTS: BuildProject[] = [
   {
-    id: 'a1',
-    title: 'Big Sur Coastal Pavilion',
-    type: 'Residential',
-    location: 'Carmel Highlands, CA',
-    area: '4,200 sq ft',
-    year: '2026',
-    image: DEMO_MEDIA.architectureHero,
+    id: 'bc-1',
+    title: 'DHA Phase 8 Courtyard 1-Kanal Villa',
+    category: 'Residential',
+    location: 'Lahore',
+    area: '4,800 Sq.Ft Turnkey',
+    budgetPkr: 'PKR 4.2 Crore',
+    image: DEMO_MEDIA.estateflowDhaVilla,
+    summary: 'Cantilevered fair-face concrete, Burma teak louvers, and double-height natural atrium.',
+    specs: 'Grade-60 Rebar · Double-Glazed Low-E Windows · Solar Hybrid Ready',
   },
   {
-    id: 'a2',
-    title: 'Mercer Timber Atrium',
-    type: 'Commercial',
-    location: 'Portland, OR',
-    area: '18,500 sq ft',
-    year: '2025',
-    image:
-      'https://images.pexels.com/photos/35203563/pexels-photo-35203563.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
+    id: 'bc-2',
+    title: 'Gulberg III Corporate Business Plaza',
+    category: 'Commercial',
+    location: 'Lahore',
+    area: '28,000 Sq.Ft · G+6',
+    budgetPkr: 'PKR 16.5 Crore',
+    image: DEMO_MEDIA.estateflowCommercialPlaza,
+    summary: 'Energy-efficient curtain glass facade engineered for tech offices and ground-floor retail.',
+    specs: '2 Basement Levels · Schindler High-Speed Lifts · LDA Approved',
   },
   {
-    id: 'a3',
-    title: 'Sora Cliffside Retreat',
-    type: 'Hospitality',
-    location: 'Vancouver Island',
-    area: '9,800 sq ft',
-    year: '2025',
-    image:
-      'https://images.pexels.com/photos/7693692/pexels-photo-7693692.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
+    id: 'bc-3',
+    title: 'Sector F-6 Architectural Concrete Site',
+    category: 'Residential',
+    location: 'Islamabad',
+    area: '6,200 Sq.Ft Turnkey',
+    budgetPkr: 'PKR 5.8 Crore',
+    image: DEMO_MEDIA.buildcraftConstruction,
+    summary: 'Margalla-view stone residence integrating seismic Zone-2B reinforcement and radiant floor heating.',
+    specs: 'CDA Seismic Compliance · Travertine Stone Cladding · Smart BMS',
   },
 ];
 
 export function ServiceBusinessDemo({ onBack }: { onBack: () => void }) {
-  const [filter, setFilter] = useState('All');
-  const [areaSqFt, setAreaSqFt] = useState(3200);
-  const [projectType, setProjectType] = useState<'Residential' | 'Commercial' | 'Hospitality'>(
-    'Residential',
-  );
-  const [tier, setTier] = useState<'Concept' | 'Full Design' | 'Turnkey'>('Full Design');
+  const [filter, setFilter] = useState<'All' | 'Residential' | 'Commercial'>('All');
+  const [selectedProject, setSelectedProject] = useState<BuildProject | null>(null);
+  const [areaSqFt, setAreaSqFt] = useState(4500);
+  const [projectType, setProjectType] = useState<'Residential Villa' | 'Commercial Plaza' | 'Corporate Fit-Out'>('Residential Villa');
+  const [finishTier, setFinishTier] = useState<'Grey Structure' | 'A-Class Finish' | 'Turnkey Luxury'>('A-Class Finish');
 
-  const [clientName, setClientName] = useState('');
-  const [clientEmail, setClientEmail] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-
-  const estimate = useMemo(
-    () => calculateArchitectureEstimate({ areaSqFt, projectType, tier }),
-    [areaSqFt, projectType, tier],
-  );
+  const [inqName, setInqName] = useState('');
+  const [inqPhone, setInqPhone] = useState('');
+  const [inqCity, setInqCity] = useState('Lahore');
+  const [inqSent, setInqSent] = useState(false);
 
   const visibleProjects = useMemo(
-    () => ARCH_PROJECTS.filter((p) => filter === 'All' || p.type === filter),
+    () => (filter === 'All' ? PROJECTS : PROJECTS.filter((p) => p.category === filter)),
     [filter],
   );
 
-  const handleBook = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!clientName.trim() || !clientEmail.trim()) return;
-    setSubmitted(true);
-  };
+  const estimate = useMemo(
+    () => calculateConstructionEstimatePkr({ areaSqFt, projectType, finishTier }),
+    [areaSqFt, projectType, finishTier],
+  );
 
   return (
     <div
-      className="min-h-screen bg-[#F8F6F1] text-[#1A1917]"
+      className="min-h-screen bg-white text-[#18181B]"
       style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}
     >
       <DemoReturnBar
-        demoName="Website Design & Development"
-        clientBrand="Alder & Stone Architecture"
-        categoryLabel="Service Demo 01"
+        demoName="Business Website Development"
+        clientBrand="BuildCraft"
+        categoryLabel="Service Demo 11"
         onBack={onBack}
       />
 
-      {/* 3-Zone Header */}
-      <header className="border-b border-[#E5DFD5] bg-[#F8F6F1]">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-8 px-6 py-4">
-          <a
-            href="#as-top"
-            className="text-xl font-semibold tracking-tight whitespace-nowrap shrink-0"
-            style={{ fontFamily: '"Cormorant Garamond", serif' }}
+      {/* Charcoal, White & Gold Header */}
+      <header className="bg-[#18181B] text-white border-b border-[#C6A875]/30">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-5 sm:px-6">
+          <span
+            className="text-xl font-bold tracking-tight text-[#C6A875] whitespace-nowrap shrink-0"
+            style={{ fontFamily: '"Outfit", sans-serif' }}
           >
-            Alder &amp; Stone
-          </a>
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-[#57524A]">
-            <a href="#as-practice" className="hover:text-[#1A1917] whitespace-nowrap">
-              Practice
-            </a>
-            <a href="#as-works" className="hover:text-[#1A1917] whitespace-nowrap">
-              Selected Works
-            </a>
-            <a href="#as-estimator" className="hover:text-[#1A1917] whitespace-nowrap">
-              Scope Estimator
-            </a>
-            <a href="#as-consult" className="hover:text-[#1A1917] whitespace-nowrap">
-              Consultations
-            </a>
+            BuildCraft
+          </span>
+          <nav className="hidden md:flex items-center gap-7 text-xs font-medium text-zinc-300">
+            <a href="#bc-services" className="hover:text-[#C6A875] whitespace-nowrap">Services</a>
+            <a href="#bc-projects" className="hover:text-[#C6A875] whitespace-nowrap">Projects</a>
+            <a href="#bc-estimator" className="hover:text-[#C6A875] whitespace-nowrap">PKR Estimator</a>
+            <a href="#bc-faq" className="hover:text-[#C6A875] whitespace-nowrap">Testimonials &amp; FAQ</a>
           </nav>
           <a
-            href="#as-consult"
-            className="rounded-lg bg-[#1A1917] px-4 py-2 text-xs font-semibold text-[#F8F6F1] hover:bg-[#3A3631] whitespace-nowrap shrink-0"
+            href="#bc-contact"
+            className="rounded-lg bg-[#C6A875] px-4 py-2 text-xs font-bold text-[#18181B] hover:bg-[#DCC9A3] whitespace-nowrap shrink-0"
           >
-            Schedule Studio Call
+            Request Site Visit
           </a>
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-12 space-y-20">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 space-y-20">
         {/* Hero Split */}
-        <section id="as-top" className="grid items-stretch gap-10 lg:grid-cols-12">
-          <div className="flex flex-col justify-between lg:col-span-5">
+        <section className="grid items-stretch gap-10 lg:grid-cols-12">
+          <div className="flex flex-col justify-between py-2 lg:col-span-6">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8B5E34]">
-                Pacific Northwest &amp; Coastal Architecture
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#9A7B48]">
+                PEC-Licensed Architecture &amp; Construction · Lahore · Islamabad · Karachi
               </p>
               <h1
-                className="mt-4 text-4xl font-semibold leading-[1.05] sm:text-5xl"
-                style={{ fontFamily: '"Cormorant Garamond", serif' }}
+                className="mt-3 text-4xl font-bold leading-[1.08] tracking-tight text-[#18181B] sm:text-5xl"
+                style={{ fontFamily: '"Outfit", sans-serif', textWrap: 'balance' }}
               >
-                Structures shaped by timber, concrete, and coastal light.
+                Engineered grey structure, commercial plazas &amp; turnkey luxury homes.
               </h1>
-              <p className="mt-5 text-sm leading-relaxed text-[#57524A]">
-                Alder &amp; Stone is an architectural practice designing private residences, timber
-                commercial atriums, and hospitality retreats built for permanence.
+              <p className="mt-4 text-sm leading-relaxed text-zinc-600">
+                BuildCraft is a PEC-licensed Pakistani construction and architectural practice
+                delivering structural engineering, DHA/CDA approvals, and fixed-timeline turnkey
+                execution with itemized BOQ transparency.
               </p>
             </div>
             <div className="mt-8 flex flex-wrap gap-3">
               <a
-                href="#as-estimator"
-                className="inline-flex items-center gap-2 rounded-lg bg-[#8B5E34] px-5 py-2.5 text-xs font-semibold text-white hover:bg-[#734C29]"
+                href="#bc-estimator"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#18181B] px-5 py-3 text-xs font-bold text-white hover:bg-zinc-800"
               >
-                Estimate Project Scope <ArrowRight className="h-3.5 w-3.5" />
+                Estimate Construction Cost (PKR) <ArrowRight className="h-3.5 w-3.5" />
               </a>
               <a
-                href="#as-works"
-                className="rounded-lg border border-[#D4CCC0] px-5 py-2.5 text-xs font-semibold hover:border-[#1A1917]"
+                href="#bc-projects"
+                className="rounded-lg border border-zinc-300 px-5 py-3 text-xs font-bold text-[#18181B]"
               >
-                Explore Works
+                View Built Projects
               </a>
             </div>
           </div>
 
-          <div className="lg:col-span-7">
-            <div className="aspect-[16/10] overflow-hidden rounded-2xl border border-[#E5DFD5]">
+          <div className="lg:col-span-6">
+            <div className="h-full min-h-[340px] overflow-hidden rounded-2xl border border-zinc-200">
               <ResilientImage
-                src={DEMO_MEDIA.architectureHero}
-                alt="Minimalist concrete and cedar pavilion overlooking coastal cliffs"
+                src={DEMO_MEDIA.buildcraftConstruction}
+                alt="BuildCraft modern concrete and glass corporate building under precision structural engineering"
                 className="h-full w-full object-cover"
-                fallbackLabel="Alder & Stone"
+                fallbackLabel="BuildCraft Engineering"
               />
             </div>
           </div>
         </section>
 
-        {/* Full-Width Metrics Strip */}
-        <section
-          id="as-practice"
-          className="grid gap-6 rounded-2xl border border-[#E5DFD5] bg-white p-7 sm:grid-cols-2 lg:grid-cols-4"
-        >
+        {/* Services */}
+        <section id="bc-services" className="grid gap-6 md:grid-cols-3 border-t border-zinc-200 pt-14">
           {[
-            { icon: Building2, value: '34', label: 'Completed Commissions' },
-            { icon: Compass, value: '14 yrs', label: 'Coastal Engineering' },
-            { icon: Ruler, value: 'Net-Zero', label: 'Passive Solar Standard' },
-            { icon: CheckCircle2, value: '98%', label: 'On-Budget Delivery' },
-          ].map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <div key={stat.label} className="flex items-start gap-3">
-                <Icon className="h-5 w-5 text-[#8B5E34] shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xl font-bold tabular-nums">{stat.value}</p>
-                  <p className="text-xs text-[#57524A]">{stat.label}</p>
-                </div>
-              </div>
-            );
-          })}
+            {
+              title: '01. Architectural & 3D Planning',
+              desc: 'DHA, CDA, and Bahria Town by-law compliant architectural drawings, MEP schematics, and BIM modeling.',
+            },
+            {
+              title: '02. Grey Structure Execution',
+              desc: 'Grade-60 steel reinforcement, batching-plant concrete, damp proofing, and daily engineer site audits.',
+            },
+            {
+              title: '03. Turnkey Commercial & Villas',
+              desc: 'Complete joinery, Italian tilework, VRF HVAC automation, and handover with defect liability warranty.',
+            },
+          ].map((s) => (
+            <div key={s.title} className="rounded-xl border border-zinc-200 bg-zinc-50/70 p-6">
+              <Building2 className="h-5 w-5 text-[#9A7B48]" />
+              <h2 className="mt-3 text-base font-bold text-[#18181B]">{s.title}</h2>
+              <p className="mt-2 text-xs leading-relaxed text-zinc-600">{s.desc}</p>
+            </div>
+          ))}
         </section>
 
-        {/* Selected Works */}
-        <section id="as-works">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        {/* Project Gallery with Clickable Detail Modal */}
+        <section id="bc-projects" className="space-y-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h2
-                className="text-3xl font-semibold"
-                style={{ fontFamily: '"Cormorant Garamond", serif' }}
-              >
-                Selected Architectural Works
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#9A7B48]">Built Portfolio</p>
+              <h2 className="mt-1 text-3xl font-bold" style={{ fontFamily: '"Outfit", sans-serif' }}>
+                Residential &amp; Commercial Landmarks
               </h2>
-              <p className="mt-1 text-sm text-[#57524A]">
-                Filter studio commissions across residential, commercial, and hospitality typologies.
-              </p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {['All', 'Residential', 'Commercial', 'Hospitality'].map((cat) => (
+            <div className="inline-flex rounded-lg bg-zinc-100 p-1">
+              {(['All', 'Residential', 'Commercial'] as const).map((cat) => (
                 <button
                   key={cat}
                   type="button"
                   onClick={() => setFilter(cat)}
-                  className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold cursor-pointer ${
-                    filter === cat
-                      ? 'bg-[#1A1917] text-white'
-                      : 'border border-[#E5DFD5] bg-white text-[#57524A]'
+                  className={`rounded-md px-3.5 py-1.5 text-xs font-semibold cursor-pointer ${
+                    filter === cat ? 'bg-[#18181B] text-[#C6A875]' : 'text-zinc-600'
                   }`}
                 >
                   {cat}
@@ -212,198 +207,284 @@ export function ServiceBusinessDemo({ onBack }: { onBack: () => void }) {
             </div>
           </div>
 
-          <div className="mt-8 grid gap-6 md:grid-cols-3">
-            {visibleProjects.map((proj) => (
-              <article
-                key={proj.id}
-                className="overflow-hidden rounded-2xl border border-[#E5DFD5] bg-white"
+          <div className="grid gap-6 md:grid-cols-3">
+            {visibleProjects.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setSelectedProject(p)}
+                className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white text-left hover:border-[#C6A875] cursor-pointer"
               >
                 <div className="aspect-[4/3] overflow-hidden">
                   <ResilientImage
-                    src={proj.image}
-                    alt={proj.title}
-                    className="h-full w-full object-cover"
-                    fallbackLabel={proj.title}
+                    src={p.image}
+                    alt={p.title}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    fallbackLabel={p.title}
                   />
                 </div>
                 <div className="p-5">
-                  <p className="text-xs text-[#8B5E34] font-semibold">
-                    {proj.type} · {proj.year}
+                  <p className="text-xs font-semibold text-[#9A7B48]">
+                    {p.category} · {p.location} · {p.area}
                   </p>
-                  <h3 className="mt-1 text-lg font-bold">{proj.title}</h3>
-                  <p className="mt-1 text-xs text-[#57524A]">
-                    {proj.location} · {proj.area}
-                  </p>
+                  <h3 className="mt-1 text-base font-bold text-[#18181B]">{p.title}</h3>
+                  <p className="mt-2 text-xs text-zinc-600">{p.summary}</p>
                 </div>
-              </article>
+              </button>
             ))}
           </div>
         </section>
 
-        {/* Interactive Scope Estimator & Consultation */}
-        <section id="as-estimator" className="grid gap-10 lg:grid-cols-12">
-          <div className="rounded-2xl border border-[#E5DFD5] bg-white p-7 lg:col-span-7 space-y-6">
+        {/* Interactive PKR Estimator & Contact Inquiry */}
+        <section id="bc-estimator" className="grid gap-8 rounded-2xl border border-zinc-200 bg-[#18181B] p-8 text-white lg:grid-cols-12">
+          <div className="lg:col-span-6 space-y-5">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8B5E34]">
-                Interactive Planning Tool
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#C6A875]">
+                Interactive Scope Tool
               </p>
-              <h2
-                className="mt-1 text-3xl font-semibold"
-                style={{ fontFamily: '"Cormorant Garamond", serif' }}
-              >
-                Architectural Fee &amp; Timeline Estimator
+              <h2 className="mt-1 text-2xl font-bold" style={{ fontFamily: '"Outfit", sans-serif' }}>
+                Construction Cost Estimator (PKR)
               </h2>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="arch-type" className="block text-xs font-semibold text-[#57524A]">
-                  Project Typology
-                </label>
-                <select
-                  id="arch-type"
-                  value={projectType}
-                  onChange={(e) =>
-                    setProjectType(
-                      e.target.value as 'Residential' | 'Commercial' | 'Hospitality',
-                    )
-                  }
-                  className="mt-1.5 w-full rounded-lg border border-[#D4CCC0] px-3 py-2 text-sm"
-                >
-                  <option>Residential</option>
-                  <option>Commercial</option>
-                  <option>Hospitality</option>
-                </select>
-              </div>
-              <div>
-                <label htmlFor="arch-tier" className="block text-xs font-semibold text-[#57524A]">
-                  Service Tier
-                </label>
-                <select
-                  id="arch-tier"
-                  value={tier}
-                  onChange={(e) =>
-                    setTier(e.target.value as 'Concept' | 'Full Design' | 'Turnkey')
-                  }
-                  className="mt-1.5 w-full rounded-lg border border-[#D4CCC0] px-3 py-2 text-sm"
-                >
-                  <option>Concept</option>
-                  <option>Full Design</option>
-                  <option>Turnkey</option>
-                </select>
-              </div>
-            </div>
-
             <div>
-              <div className="flex justify-between text-xs font-semibold">
-                <label htmlFor="arch-area">Estimated Footprint</label>
-                <span className="font-mono tabular-nums text-[#8B5E34]">
-                  {areaSqFt.toLocaleString()} sq ft
-                </span>
+              <div className="flex justify-between text-xs">
+                <label htmlFor="bc-area">Covered Area</label>
+                <span className="font-mono font-bold text-[#C6A875]">{areaSqFt.toLocaleString()} Sq.Ft</span>
               </div>
               <input
-                id="arch-area"
+                id="bc-area"
                 type="range"
-                min={1000}
-                max={15000}
+                min={1500}
+                max={20000}
                 step={250}
                 value={areaSqFt}
                 onChange={(e) => setAreaSqFt(Number(e.target.value))}
-                className="mt-2 w-full accent-[#8B5E34]"
+                className="mt-2 w-full accent-[#C6A875]"
               />
             </div>
 
-            <div className="grid gap-4 rounded-xl bg-[#F8F6F1] p-5 sm:grid-cols-2">
+            <div className="grid grid-cols-2 gap-3 text-xs">
               <div>
-                <p className="text-xs text-[#57524A]">Estimated Architectural Fee Range</p>
-                <p className="mt-1 font-mono text-xl font-bold tabular-nums text-[#1A1917]">
-                  ${estimate.estimatedBudgetLow.toLocaleString()} – $
-                  {estimate.estimatedBudgetHigh.toLocaleString()}
-                </p>
+                <p className="text-zinc-400 mb-1.5">Project Type</p>
+                <select
+                  aria-label="Project Type"
+                  value={projectType}
+                  onChange={(e) => setProjectType(e.target.value as typeof projectType)}
+                  className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white"
+                >
+                  <option>Residential Villa</option>
+                  <option>Commercial Plaza</option>
+                  <option>Corporate Fit-Out</option>
+                </select>
               </div>
               <div>
-                <p className="text-xs text-[#57524A]">Design Phase Duration</p>
-                <p className="mt-1 font-mono text-xl font-bold tabular-nums text-[#8B5E34]">
-                  ~{estimate.timelineWeeks} Weeks
-                </p>
+                <p className="text-zinc-400 mb-1.5">Execution Tier</p>
+                <select
+                  aria-label="Execution Tier"
+                  value={finishTier}
+                  onChange={(e) => setFinishTier(e.target.value as typeof finishTier)}
+                  className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white"
+                >
+                  <option>Grey Structure</option>
+                  <option>A-Class Finish</option>
+                  <option>Turnkey Luxury</option>
+                </select>
               </div>
+            </div>
+
+            <div className="rounded-xl border border-[#C6A875]/30 bg-black/40 p-5">
+              <p className="text-xs text-zinc-400">Estimated Budget Range ({finishTier})</p>
+              <p className="mt-1 font-mono text-xl font-bold text-[#C6A875] tabular-nums">
+                {formatPkr(estimate.estimatedBudgetLow)} – {formatPkr(estimate.estimatedBudgetHigh)}
+              </p>
+              <p className="mt-1 text-xs text-zinc-300">
+                Estimated Delivery: <strong>{estimate.timelineMonths} Months</strong>
+              </p>
             </div>
           </div>
 
-          <div
-            id="as-consult"
-            className="rounded-2xl border border-[#E5DFD5] bg-[#1A1917] p-7 text-white lg:col-span-5"
-          >
-            <h2
-              className="text-2xl font-semibold"
-              style={{ fontFamily: '"Cormorant Garamond", serif' }}
-            >
-              Book a Studio Consultation
-            </h2>
-            <p className="mt-2 text-xs text-stone-300">
-              Your selected scope ({projectType}, {areaSqFt.toLocaleString()} sq ft, {tier}) will be
-              attached to this demo request.
+          <div id="bc-contact" className="lg:col-span-6 rounded-xl bg-white p-6 text-[#18181B]">
+            <h3 className="text-lg font-bold">Request Engineering Consultation</h3>
+            <p className="mt-1 text-xs text-zinc-500">
+              <MapPin className="inline h-3.5 w-3.5 text-[#9A7B48]" /> 42-C Main Boulevard, Gulberg III, Lahore ·{' '}
+              <Phone className="inline h-3.5 w-3.5 text-[#9A7B48]" /> +92 42 3511 0909
             </p>
-
-            {submitted ? (
-              <div role="status" className="mt-6 rounded-xl bg-white/10 p-5 text-sm">
-                <p className="font-bold text-amber-300">Consultation Request Recorded (Demo)</p>
-                <p className="mt-2 text-xs text-stone-200">
-                  Thank you, {clientName}. A partner architect would review your{' '}
-                  {areaSqFt.toLocaleString()} sq ft {projectType.toLowerCase()} brief.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSubmitted(false);
-                    setClientName('');
-                    setClientEmail('');
-                  }}
-                  className="mt-4 rounded border border-white/30 px-3 py-1.5 text-xs cursor-pointer"
-                >
-                  Reset
-                </button>
+            {inqSent ? (
+              <div className="mt-5 rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-xs text-emerald-900" role="status">
+                <CheckCircle2 className="h-5 w-5 text-emerald-700" />
+                <p className="mt-2 font-bold">Site Consultation Request Recorded (Demo)</p>
+                <p>Thank you, {inqName}. Project estimate attached for {inqCity}.</p>
               </div>
             ) : (
-              <form onSubmit={handleBook} className="mt-5 space-y-4">
-                <div>
-                  <label htmlFor="as-name" className="block text-xs font-semibold text-stone-300">
-                    Full Name
-                  </label>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!inqName.trim() || !inqPhone.trim()) return;
+                  setInqSent(true);
+                }}
+                className="mt-4 space-y-3 text-xs"
+              >
+                <input
+                  type="text"
+                  required
+                  aria-label="Client or Plot Owner Name"
+                  placeholder="Client / Plot Owner Name"
+                  value={inqName}
+                  onChange={(e) => setInqName(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-200 px-3 py-2.5"
+                />
+                <div className="grid grid-cols-2 gap-3">
                   <input
-                    id="as-name"
+                    type="tel"
                     required
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    placeholder="Jordan Ellis"
-                    className="mt-1 w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white"
+                    aria-label="Phone number"
+                    placeholder="Phone (+92 3XX...)"
+                    value={inqPhone}
+                    onChange={(e) => setInqPhone(e.target.value)}
+                    className="rounded-lg border border-zinc-200 px-3 py-2.5"
                   />
-                </div>
-                <div>
-                  <label htmlFor="as-email" className="block text-xs font-semibold text-stone-300">
-                    Email Address
-                  </label>
-                  <input
-                    id="as-email"
-                    type="email"
-                    required
-                    value={clientEmail}
-                    onChange={(e) => setClientEmail(e.target.value)}
-                    placeholder="jordan@domain.com"
-                    className="mt-1 w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white"
-                  />
+                  <select
+                    aria-label="Plot city"
+                    value={inqCity}
+                    onChange={(e) => setInqCity(e.target.value)}
+                    className="rounded-lg border border-zinc-200 px-3 py-2.5"
+                  >
+                    <option>Lahore</option>
+                    <option>Islamabad</option>
+                    <option>Karachi</option>
+                  </select>
                 </div>
                 <button
                   type="submit"
-                  className="w-full rounded-lg bg-[#C6A875] py-2.5 text-xs font-bold text-[#090909] hover:bg-[#DCC9A3] cursor-pointer"
+                  className="w-full rounded-lg bg-[#18181B] py-3 font-bold text-[#C6A875] hover:bg-zinc-800 cursor-pointer"
                 >
-                  Request Studio Consultation
+                  Schedule BuildCraft Site Visit (Demo)
                 </button>
               </form>
             )}
           </div>
         </section>
-      </main>
+
+        {/* Testimonials & Engineering FAQ */}
+        <section id="bc-faq" className="grid gap-6 lg:grid-cols-2">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between text-xs">
+              <h2 className="text-2xl font-bold" style={{ fontFamily: '"Outfit", sans-serif' }}>
+                Client Endorsement
+              </h2>
+              <span className="text-zinc-500">Sample Content</span>
+            </div>
+            <blockquote className="rounded-2xl border border-zinc-200 bg-zinc-50 p-6 text-xs space-y-2">
+              <p className="text-sm leading-relaxed text-zinc-700">
+                &ldquo;BuildCraft completed our 1-Kanal DHA Phase 8 grey structure in 5.5 months with
+                certified cube-strength concrete test reports at every slab pour.&rdquo;
+              </p>
+              <footer className="font-bold text-[#9A7B48]">— Brig. (R) Sohail Ahmed, Lahore</footer>
+            </blockquote>
+          </div>
+
+          <div className="space-y-3">
+            <h2 className="text-2xl font-bold" style={{ fontFamily: '"Outfit", sans-serif' }}>
+              Construction FAQ
+            </h2>
+            {[
+              {
+                q: 'Do your contracts specify material brands in the BOQ?',
+                a: 'Yes — steel grade, cement, wiring, waterproofing, and sanitary fixtures are itemised upfront before mobilization.',
+              },
+              {
+                q: 'Does BuildCraft assist with DHA / CDA building plan approvals?',
+                a: 'Our architectural team handles submission drawings, soil tests, and structural vetting clearances.',
+              },
+            ].map((item) => (
+              <div key={item.q} className="rounded-xl border border-zinc-200 bg-white p-4 text-xs">
+                <p className="font-bold">{item.q}</p>
+                <p className="mt-1 text-zinc-600">{item.a}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      {/* Footer */}
+      <footer className="bg-[#18181B] text-zinc-400 border-t border-[#C6A875]/20 mt-12">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-4 text-xs">
+          <div className="md:col-span-2 space-y-2">
+            <p className="text-xl font-bold text-[#C6A875]" style={{ fontFamily: '"Outfit", sans-serif' }}>
+              BUILDCRAFT ENGINEERING
+            </p>
+            <p className="max-w-sm leading-relaxed">
+              PEC-registered Pakistani civil engineering, architectural planning, and turnkey luxury
+              villa &amp; commercial plaza builders.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <p className="font-semibold text-white">Navigation</p>
+            <ul className="space-y-1.5">
+              <li><a href="#bc-services" className="hover:text-[#C6A875]">Engineering Services</a></li>
+              <li><a href="#bc-projects" className="hover:text-[#C6A875]">Project Gallery</a></li>
+              <li><a href="#bc-estimator" className="hover:text-[#C6A875]">PKR Budget Tool</a></li>
+            </ul>
+          </div>
+          <div className="space-y-2">
+            <p className="font-semibold text-white">Regional Desks</p>
+            <p>42-C Gulberg III, Lahore</p>
+            <p>Sector F-6 Markaz, Islamabad</p>
+            <p className="text-[#C6A875]">projects@buildcraft.pk</p>
+          </div>
+        </div>
+        <div className="border-t border-white/10 py-4 text-center text-[11px] text-zinc-500">
+          BuildCraft · Interactive Client Website Demonstration (Sample Data Only)
+        </div>
+      </footer>
+
+      {/* Project Detail Modal */}
+      {selectedProject && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/75 p-4"
+          onClick={() => setSelectedProject(null)}
+        >
+          <div
+            className="w-full max-w-2xl overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="relative aspect-[16/9]">
+              <ResilientImage src={selectedProject.image} alt={selectedProject.title} className="h-full w-full object-cover" />
+              <button
+                type="button"
+                aria-label="Close project detail"
+                onClick={() => setSelectedProject(null)}
+                className="absolute right-4 top-4 rounded-full bg-black/75 p-2 text-white cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="p-6 space-y-3 text-xs">
+              <p className="font-semibold text-[#9A7B48]">
+                {selectedProject.category} · {selectedProject.location} · {selectedProject.area}
+              </p>
+              <h3 className="text-2xl font-bold text-[#18181B]" style={{ fontFamily: '"Outfit", sans-serif' }}>
+                {selectedProject.title}
+              </h3>
+              <p className="leading-relaxed text-zinc-600">{selectedProject.summary}</p>
+              <p className="font-mono text-zinc-700">{selectedProject.specs}</p>
+              <div className="flex items-center justify-between border-t border-zinc-100 pt-4">
+                <span className="font-mono text-base font-bold text-[#18181B]">{selectedProject.budgetPkr}</span>
+                <a
+                  href="#bc-contact"
+                  onClick={() => setSelectedProject(null)}
+                  className="rounded-lg bg-[#18181B] px-4 py-2 font-bold text-[#C6A875]"
+                >
+                  Request Similar BOQ
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

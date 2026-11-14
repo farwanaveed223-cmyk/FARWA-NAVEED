@@ -1,643 +1,775 @@
 import React, { useMemo, useState } from 'react';
-import { FileText, Plus, Receipt, Search, Wallet, X } from 'lucide-react';
-import { DemoReturnBar } from '../../components/DemoChrome';
-import { calculateInvoiceTotals, type InvoiceLineItem } from '../../utils/demoLogic';
+import {
+  CheckCircle2,
+  Download,
+  FileText,
+  MapPin,
+  Phone,
+  Plus,
+  ShieldCheck,
+  TrendingUp,
+} from 'lucide-react';
+import { DEMO_MEDIA } from '../../assets/demoMedia';
+import { DemoReturnBar, ResilientImage } from '../../components/DemoChrome';
+import { calculateInvoiceTotals, formatPkr, type InvoiceLineItem } from '../../utils/demoLogic';
 
-interface LedgerEntry {
+interface FinoraEntry {
   id: string;
   date: string;
-  description: string;
-  category: string;
-  type: 'Income' | 'Expense';
-  amount: number;
-}
-
-interface InvoiceRecord {
-  id: string;
   client: string;
-  dueDate: string;
-  total: number;
-  status: 'Paid' | 'Pending';
+  category: 'Audit Retainer' | 'FBR Tax Filing' | 'Office Rent' | 'Software & Payroll';
+  type: 'Income' | 'Expense';
+  amountPkr: number;
 }
 
-const INITIAL_LEDGER: LedgerEntry[] = [
+const INITIAL_ENTRIES: FinoraEntry[] = [
+  { id: 'FIN-01', date: '2026-11-12', client: 'Crescent Textiles Ltd', category: 'Audit Retainer', type: 'Income', amountPkr: 450000 },
+  { id: 'FIN-02', date: '2026-11-10', client: 'PakAgro Exports Pvt', category: 'FBR Tax Filing', type: 'Income', amountPkr: 185000 },
+  { id: 'FIN-03', date: '2026-11-08', client: 'Blue Area Office Lease', category: 'Office Rent', type: 'Expense', amountPkr: 220000 },
+  { id: 'FIN-04', date: '2026-11-04', client: 'Advisory Team Payroll', category: 'Software & Payroll', type: 'Expense', amountPkr: 310000 },
+];
+
+const TAX_SERVICES = [
   {
-    id: 'tx1',
-    date: '2026-11-12',
-    description: 'Retainer Payment — Crestline Logistics',
-    category: 'Client Services',
-    type: 'Income',
-    amount: 14500,
+    title: '01. FBR NTN & Active Taxpayer Filing',
+    desc: 'Annual corporate & AOP income tax returns, wealth reconciliation, and SRB/PRA statutory compliance.',
   },
   {
-    id: 'tx2',
-    date: '2026-11-10',
-    description: 'Cloud Infrastructure & Hosting',
-    category: 'Software',
-    type: 'Expense',
-    amount: 1840,
+    title: '02. SECP Corporate Incorporation',
+    desc: 'Private limited registration, MOA/AOA drafting, board resolution filings, and statutory external audits.',
   },
   {
-    id: 'tx3',
-    date: '2026-11-08',
-    description: 'Enterprise License — Boreal Health',
-    category: 'Subscriptions',
-    type: 'Income',
-    amount: 9200,
-  },
-  {
-    id: 'tx4',
-    date: '2026-11-05',
-    description: 'Corporate Legal Retainer',
-    category: 'Legal',
-    type: 'Expense',
-    amount: 3200,
+    title: '03. Monthly Sales Tax & Payroll Withholding',
+    desc: 'Automated GST input/output reconciliation, PSID challan generation, and employee EOBI/tax schedules.',
   },
 ];
 
-const BUDGETS = [
-  { department: 'Engineering & Cloud', allocated: 28000, spent: 19400 },
-  { department: 'Marketing & Acquisition', allocated: 18000, spent: 12900 },
-  { department: 'Legal & Compliance', allocated: 12000, spent: 6800 },
-  { department: 'Operations & Travel', allocated: 10000, spent: 4950 },
-];
-
-const LEGAL_DOCS = [
+const RETAINER_PLANS = [
   {
-    id: 'doc1',
-    title: 'Master Services Agreement (MSA-2026)',
-    type: 'Commercial Contract',
-    updated: 'Oct 28, 2026',
-    clauseSummary:
-      'Governs scope of digital deliverables, 30-day net payment schedule, acceptance milestones, and mutual limitation of liability.',
+    tier: 'Startup Compliance',
+    price: 45000,
+    cycle: 'Per Month · PKR',
+    features: ['Monthly FBR Withholding Statements', 'Bookkeeping up to 150 Vouchers', 'Quarterly Cashflow Briefing'],
   },
   {
-    id: 'doc2',
-    title: 'Mutual Non-Disclosure Agreement (NDA)',
-    type: 'Confidentiality',
-    updated: 'Sep 14, 2026',
-    clauseSummary:
-      'Protects proprietary designs, source repositories, pricing schedules, and customer datasets for a 3-year term.',
+    tier: 'SME Growth CFO',
+    price: 95000,
+    cycle: 'Per Month · PKR',
+    features: ['Full General Ledger & GST Filing', 'Payroll & Statutory Tax Compliance', 'Dedicated Chartered Advisor'],
   },
   {
-    id: 'doc3',
-    title: 'IP Assignment & Licensing Addendum',
-    type: 'Intellectual Property',
-    updated: 'Nov 02, 2026',
-    clauseSummary:
-      'Transfers full copyright of bespoke client UI assets upon final invoice settlement while retaining open-source libraries.',
+    tier: 'Enterprise Statutory Suite',
+    price: 210000,
+    cycle: 'Per Month · PKR',
+    features: ['SECP Statutory Audit Prep', 'Multi-Branch Cost Center P&L', 'FBR Notice & Tribunal Representation'],
   },
 ];
 
 export function FinanceLegalDemo({ onBack }: { onBack: () => void }) {
-  const [tab, setTab] = useState<'ledger' | 'invoices' | 'budgets' | 'legal'>('ledger');
-  const [entries, setEntries] = useState<LedgerEntry[]>(INITIAL_LEDGER);
-  const [txFilter, setTxFilter] = useState<'All' | 'Income' | 'Expense'>('All');
+  const [entries, setEntries] = useState<FinoraEntry[]>(INITIAL_ENTRIES);
+  const [tab, setTab] = useState<'ledger' | 'invoices' | 'tax'>('ledger');
 
-  const [txDesc, setTxDesc] = useState('');
-  const [txType, setTxType] = useState<'Income' | 'Expense'>('Income');
-  const [txAmount, setTxAmount] = useState('');
-  const [txCategory, setTxCategory] = useState('Client Services');
+  const [newClient, setNewClient] = useState('');
+  const [newType, setNewType] = useState<'Income' | 'Expense'>('Income');
+  const [newCategory, setNewCategory] = useState<FinoraEntry['category']>('FBR Tax Filing');
+  const [newAmount, setNewAmount] = useState('95000');
 
-  const [invoices, setInvoices] = useState<InvoiceRecord[]>([
-    { id: 'INV-2041', client: 'Kestrel Partners', dueDate: '2026-11-25', total: 8800, status: 'Pending' },
-    { id: 'INV-2040', client: 'Crestline Logistics', dueDate: '2026-11-10', total: 14500, status: 'Paid' },
+  // Invoice Builder State
+  const [invClient, setInvClient] = useState('Zayd Logistics (Pvt) Ltd, Lahore');
+  const [taxRate, setTaxRate] = useState(17);
+  const [lineItems, setLineItems] = useState<InvoiceLineItem[]>([
+    { description: 'Annual Statutory Audit & SECP Review', quantity: 1, unitPrice: 140000 },
+    { description: 'Monthly FBR Sales Tax Advisory', quantity: 2, unitPrice: 35000 },
   ]);
-  const [invClient, setInvClient] = useState('');
-  const [invTax, setInvTax] = useState(10);
-  const [invItems, setInvItems] = useState<InvoiceLineItem[]>([
-    { description: 'Website Architecture & UI System', quantity: 1, unitPrice: 4800 },
-  ]);
+  const [downloadNote, setDownloadNote] = useState('');
 
-  const [docSearch, setDocSearch] = useState('');
-  const [selectedDoc, setSelectedDoc] = useState<(typeof LEGAL_DOCS)[number] | null>(null);
+  // Advisory Consultation Form
+  const [consultName, setConsultName] = useState('');
+  const [consultCompany, setConsultCompany] = useState('');
+  const [consultScope, setConsultScope] = useState('SME Growth CFO');
+  const [consultSent, setConsultSent] = useState(false);
 
   const totals = useMemo(() => {
-    const income = entries.filter((e) => e.type === 'Income').reduce((s, e) => s + e.amount, 0);
-    const expense = entries.filter((e) => e.type === 'Expense').reduce((s, e) => s + e.amount, 0);
+    const income = entries.filter((e) => e.type === 'Income').reduce((s, e) => s + e.amountPkr, 0);
+    const expense = entries.filter((e) => e.type === 'Expense').reduce((s, e) => s + e.amountPkr, 0);
     return { income, expense, net: income - expense };
   }, [entries]);
 
-  const filteredEntries = useMemo(
-    () => entries.filter((e) => txFilter === 'All' || e.type === txFilter),
-    [entries, txFilter],
+  const invTotals = useMemo(
+    () => calculateInvoiceTotals(lineItems, taxRate),
+    [lineItems, taxRate],
   );
 
-  const invoiceTotals = useMemo(
-    () => calculateInvoiceTotals(invItems, invTax),
-    [invItems, invTax],
-  );
-
-  const filteredDocs = useMemo(() => {
-    const q = docSearch.trim().toLowerCase();
-    return LEGAL_DOCS.filter(
-      (d) => !q || d.title.toLowerCase().includes(q) || d.type.toLowerCase().includes(q),
-    );
-  }, [docSearch]);
-
-  const handleAddEntry = (e: React.FormEvent) => {
+  const addEntry = (e: React.FormEvent) => {
     e.preventDefault();
-    const num = Number(txAmount);
-    if (!txDesc.trim() || !Number.isFinite(num) || num <= 0) return;
+    if (!newClient.trim()) return;
     setEntries((prev) => [
       {
-        id: `tx-${Date.now()}`,
-        date: '2026-11-13',
-        description: txDesc.trim(),
-        category: txCategory,
-        type: txType,
-        amount: num,
+        id: `FIN-0${prev.length + 1}`,
+        date: '2026-11-14',
+        client: newClient.trim(),
+        category: newCategory,
+        type: newType,
+        amountPkr: Math.max(1000, Number(newAmount) || 50000),
       },
       ...prev,
     ]);
-    setTxDesc('');
-    setTxAmount('');
+    setNewClient('');
   };
 
-  const handleCreateInvoice = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!invClient.trim() || invoiceTotals.total <= 0) return;
-    setInvoices((prev) => [
-      {
-        id: `INV-${2042 + prev.length}`,
-        client: invClient.trim(),
-        dueDate: '2026-12-13',
-        total: invoiceTotals.total,
-        status: 'Pending',
-      },
+  const addLineItem = () => {
+    setLineItems((prev) => [
       ...prev,
+      { description: 'NTN Registration & Compliance Check', quantity: 1, unitPrice: 25000 },
     ]);
-    setInvClient('');
+  };
+
+  const downloadSampleInvoice = () => {
+    const lines = [
+      'FINORA ACCOUNTING & TAX CONSULTANCY (SAMPLE INVOICE)',
+      `Client: ${invClient}`,
+      `Date: 2026-11-14`,
+      '--------------------------------------------------',
+      ...lineItems.map(
+        (li) => `${li.description} x${li.quantity} = ${formatPkr(li.quantity * li.unitPrice)}`,
+      ),
+      '--------------------------------------------------',
+      `Subtotal: ${formatPkr(invTotals.subtotal)}`,
+      `GST (${taxRate}%): ${formatPkr(invTotals.taxAmount)}`,
+      `TOTAL DUE: ${formatPkr(invTotals.total)}`,
+      '',
+      'Note: Interactive Demonstration Document Only.',
+    ].join('\n');
+
+    const blob = new Blob([lines], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Finora-Sample-Invoice-PKR.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+    setDownloadNote('Sample PKR invoice downloaded (.txt).');
   };
 
   return (
     <div
-      className="min-h-screen bg-[#FCFBF8] text-[#111827]"
+      className="min-h-screen bg-[#F4F7F6] text-[#0A1628]"
       style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}
     >
       <DemoReturnBar
-        demoName="Finance & Legal Management"
-        clientBrand="Meridian Ledger"
-        categoryLabel="Operations"
+        demoName="Finance & Accounting"
+        clientBrand="Finora"
+        categoryLabel="Business Demo 06"
         onBack={onBack}
       />
 
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <div className="flex flex-col gap-4 border-b border-stone-200 pb-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-800">
-              Meridian Advisory &amp; Treasury
-            </p>
-            <h1
-              className="mt-1 text-2xl font-bold sm:text-3xl"
-              style={{ fontFamily: '"Playfair Display", serif' }}
-            >
-              Financial Ledger &amp; Legal Vault
-            </h1>
+      {/* Corporate Navigation Header */}
+      <header className="bg-[#0A1628] text-white border-b border-emerald-500/25">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-4 sm:px-6">
+          <a
+            href="#fin-top"
+            className="text-xl font-bold tracking-tight text-white whitespace-nowrap shrink-0"
+            style={{ fontFamily: '"Outfit", sans-serif' }}
+          >
+            FINORA
+          </a>
+          <nav className="hidden md:flex items-center gap-7 text-xs font-medium text-slate-300">
+            <a href="#fin-workspace" className="hover:text-emerald-400 whitespace-nowrap">Financial Console</a>
+            <a href="#fin-plans" className="hover:text-emerald-400 whitespace-nowrap">Retainer Plans</a>
+            <a href="#fin-advisory" className="hover:text-emerald-400 whitespace-nowrap">Tax Advisory</a>
+            <a href="#fin-faq" className="hover:text-emerald-400 whitespace-nowrap">FAQ</a>
+          </nav>
+          <a
+            href="#fin-consult"
+            className="rounded-lg bg-emerald-500 px-4 py-2 text-xs font-bold text-[#0A1628] hover:bg-emerald-400 whitespace-nowrap shrink-0"
+          >
+            Book Tax Review
+          </a>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 space-y-16">
+        {/* Advisory Firm Hero Split */}
+        <section id="fin-top" className="grid items-stretch gap-8 lg:grid-cols-12">
+          <div className="flex flex-col justify-between py-2 lg:col-span-6">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700">
+                Chartered Financial Advisory · Blue Area Islamabad &amp; I.I. Chundrigar Karachi
+              </p>
+              <h1
+                className="mt-3 text-3xl font-bold leading-[1.08] tracking-tight text-[#0A1628] sm:text-5xl"
+                style={{ fontFamily: '"Outfit", sans-serif', textWrap: 'balance' }}
+              >
+                Transparent corporate accounting, FBR tax compliance &amp; PKR invoicing.
+              </h1>
+              <p className="mt-4 text-sm leading-relaxed text-slate-600">
+                Finora serves Pakistani exporters, SaaS founders, and family conglomerates with
+                real-time bookkeeping, statutory audit readiness, and proactive withholding tax planning.
+              </p>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => setTab('invoices')}
+                className="rounded-lg bg-[#0A1628] px-5 py-3 text-xs font-bold text-white hover:bg-[#162B4D] cursor-pointer"
+              >
+                Open PKR Invoice Builder
+              </button>
+              <a
+                href="#fin-plans"
+                className="rounded-lg border border-slate-300 bg-white px-5 py-3 text-xs font-bold text-[#0A1628]"
+              >
+                Explore Monthly Retainers
+              </a>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-1.5 rounded-xl border border-stone-200 bg-white p-1">
-            {(
-              [
-                { id: 'ledger', label: 'Income & Expense', icon: Wallet },
-                { id: 'invoices', label: 'Invoice Builder', icon: Receipt },
-                { id: 'budgets', label: 'Budgets & Reports', icon: Plus },
-                { id: 'legal', label: 'Legal Library', icon: FileText },
-              ] as const
-            ).map((item) => {
-              const Icon = item.icon;
-              return (
+          <div className="lg:col-span-6">
+            <div className="h-full min-h-[300px] overflow-hidden rounded-2xl border border-slate-200 bg-white">
+              <ResilientImage
+                src={DEMO_MEDIA.finoraAdvisoryOffice}
+                alt="Finora chartered accountancy boardroom and financial advisory partners"
+                className="h-full w-full object-cover"
+                fallbackLabel="Finora Corporate Advisory"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Financial Summary KPIs & Console Tabs */}
+        <section id="fin-workspace" className="space-y-6">
+          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700">
+                Client Financial Portal
+              </p>
+              <h2 className="mt-1 text-2xl font-bold" style={{ fontFamily: '"Outfit", sans-serif' }}>
+                Live Ledger, PKR Billing &amp; Statutory Modules
+              </h2>
+            </div>
+
+            <div className="flex flex-wrap gap-1 rounded-lg bg-slate-200/80 p-1">
+              {(
+                [
+                  { id: 'ledger', label: 'Income, Expense & Budget' },
+                  { id: 'invoices', label: 'Invoice Builder' },
+                  { id: 'tax', label: 'Tax Services & Clients' },
+                ] as const
+              ).map((t) => (
                 <button
-                  key={item.id}
+                  key={t.id}
                   type="button"
-                  onClick={() => setTab(item.id)}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold cursor-pointer whitespace-nowrap ${
-                    tab === item.id
-                      ? 'bg-[#111827] text-white'
-                      : 'text-stone-600 hover:text-stone-900'
+                  onClick={() => setTab(t.id)}
+                  className={`rounded-md px-3.5 py-1.5 text-xs font-semibold cursor-pointer whitespace-nowrap ${
+                    tab === t.id ? 'bg-[#0A1628] text-white' : 'text-slate-700'
                   }`}
                 >
-                  <Icon className="h-3.5 w-3.5" />
-                  <span>{item.label}</span>
+                  {t.label}
                 </button>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Summary KPI Strip */}
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-xl border border-stone-200 bg-white p-5">
-            <p className="text-xs font-medium text-stone-500">Total Income</p>
-            <p className="mt-1.5 font-mono text-2xl font-bold tabular-nums text-emerald-700">
-              +${totals.income.toLocaleString()}
-            </p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 bg-white p-5">
+              <p className="text-xs text-slate-500">Total Consultancy Income</p>
+              <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-emerald-700">
+                {formatPkr(totals.income)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-5">
+              <p className="text-xs text-slate-500">Operating Expenses</p>
+              <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-[#0A1628]">
+                {formatPkr(totals.expense)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-5">
+              <p className="text-xs text-slate-500">Net Operating Surplus</p>
+              <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-emerald-700">
+                {formatPkr(totals.net)}
+              </p>
+            </div>
           </div>
-          <div className="rounded-xl border border-stone-200 bg-white p-5">
-            <p className="text-xs font-medium text-stone-500">Total Expenses</p>
-            <p className="mt-1.5 font-mono text-2xl font-bold tabular-nums text-red-700">
-              -${totals.expense.toLocaleString()}
-            </p>
-          </div>
-          <div className="rounded-xl border border-stone-200 bg-white p-5">
-            <p className="text-xs font-medium text-stone-500">Net Operating Cashflow</p>
-            <p className="mt-1.5 font-mono text-2xl font-bold tabular-nums text-stone-900">
-              ${totals.net.toLocaleString()}
-            </p>
-          </div>
-        </div>
 
-        {/* LEDGER */}
-        {tab === 'ledger' && (
-          <div className="mt-8 grid gap-8 lg:grid-cols-12">
-            <form
-              onSubmit={handleAddEntry}
-              className="rounded-xl border border-stone-200 bg-white p-6 space-y-4 lg:col-span-4"
-            >
-              <h2 className="text-base font-bold">Record Transaction</h2>
-              <div>
-                <label htmlFor="fl-desc" className="block text-xs font-semibold text-stone-700">
-                  Description
-                </label>
-                <input
-                  id="fl-desc"
-                  required
-                  value={txDesc}
-                  onChange={(e) => setTxDesc(e.target.value)}
-                  placeholder="Design Retainer Payment"
-                  className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label htmlFor="fl-type" className="block text-xs font-semibold text-stone-700">
-                    Type
-                  </label>
-                  <select
-                    id="fl-type"
-                    value={txType}
-                    onChange={(e) => setTxType(e.target.value as 'Income' | 'Expense')}
-                    className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
-                  >
-                    <option>Income</option>
-                    <option>Expense</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="fl-amt" className="block text-xs font-semibold text-stone-700">
-                    Amount ($)
-                  </label>
-                  <input
-                    id="fl-amt"
-                    type="number"
-                    min={1}
-                    required
-                    value={txAmount}
-                    onChange={(e) => setTxAmount(e.target.value)}
-                    placeholder="2400"
-                    className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
-                  />
+          {tab === 'ledger' && (
+            <div className="grid gap-6 lg:grid-cols-12">
+              <div className="lg:col-span-8 rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+                <h3 className="text-base font-bold">Income &amp; Expense Ledger (PKR)</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="border-b border-slate-200 text-slate-500">
+                      <tr>
+                        <th className="py-2.5 pr-3">Date</th>
+                        <th className="py-2.5 pr-3">Client / Description</th>
+                        <th className="py-2.5 pr-3">Category</th>
+                        <th className="py-2.5 text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {entries.map((entry) => (
+                        <tr key={entry.id}>
+                          <td className="py-3 pr-3 font-mono text-slate-500">{entry.date}</td>
+                          <td className="py-3 pr-3 font-semibold text-[#0A1628]">{entry.client}</td>
+                          <td className="py-3 pr-3 text-slate-600">{entry.category}</td>
+                          <td
+                            className={`py-3 text-right font-mono font-bold tabular-nums ${
+                              entry.type === 'Income' ? 'text-emerald-700' : 'text-slate-700'
+                            }`}
+                          >
+                            {entry.type === 'Income' ? '+' : '-'} {formatPkr(entry.amountPkr)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-              <div>
-                <label htmlFor="fl-cat" className="block text-xs font-semibold text-stone-700">
-                  Category
-                </label>
-                <select
-                  id="fl-cat"
-                  value={txCategory}
-                  onChange={(e) => setTxCategory(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
-                >
-                  <option>Client Services</option>
-                  <option>Subscriptions</option>
-                  <option>Software</option>
-                  <option>Legal</option>
-                </select>
-              </div>
-              <button
-                type="submit"
-                className="w-full rounded-lg bg-[#111827] py-2.5 text-xs font-semibold text-white hover:bg-stone-800 cursor-pointer"
-              >
-                Add Entry
-              </button>
-            </form>
 
-            <div className="lg:col-span-8 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-bold">Recent Ledger Entries</h2>
-                <div className="flex gap-1.5">
-                  {(['All', 'Income', 'Expense'] as const).map((f) => (
+              <div className="lg:col-span-4 space-y-6">
+                <div className="rounded-xl border border-slate-200 bg-white p-6">
+                  <h3 className="text-base font-bold">Record Transaction</h3>
+                  <form onSubmit={addEntry} className="mt-3 space-y-3">
+                    <input
+                      type="text"
+                      required
+                      aria-label="Client or expense label"
+                      placeholder="Client or Expense Label"
+                      value={newClient}
+                      onChange={(e) => setNewClient(e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <select
+                        aria-label="Transaction type"
+                        value={newType}
+                        onChange={(e) => setNewType(e.target.value as 'Income' | 'Expense')}
+                        className="rounded-lg border border-slate-200 px-2.5 py-2 text-xs"
+                      >
+                        <option>Income</option>
+                        <option>Expense</option>
+                      </select>
+                      <select
+                        aria-label="Transaction category"
+                        value={newCategory}
+                        onChange={(e) => setNewCategory(e.target.value as FinoraEntry['category'])}
+                        className="rounded-lg border border-slate-200 px-2.5 py-2 text-xs"
+                      >
+                        <option>FBR Tax Filing</option>
+                        <option>Audit Retainer</option>
+                        <option>Office Rent</option>
+                        <option>Software &amp; Payroll</option>
+                      </select>
+                    </div>
+                    <input
+                      type="number"
+                      aria-label="Amount in PKR"
+                      value={newAmount}
+                      onChange={(e) => setNewAmount(e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-mono"
+                    />
                     <button
-                      key={f}
-                      type="button"
-                      onClick={() => setTxFilter(f)}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-semibold cursor-pointer ${
-                        txFilter === f
-                          ? 'bg-amber-800 text-white'
-                          : 'border border-stone-200 bg-white text-stone-700'
-                      }`}
+                      type="submit"
+                      className="w-full rounded-lg bg-[#0A1628] py-2.5 text-xs font-bold text-white hover:bg-[#162B4D] cursor-pointer"
                     >
-                      {f}
+                      Add Ledger Entry
                     </button>
+                  </form>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-3">
+                  <h3 className="text-sm font-bold">Quarterly Budget Utilization</h3>
+                  {[
+                    { label: 'Audit Operations', pct: 68 },
+                    { label: 'FBR Portal Tooling', pct: 45 },
+                    { label: 'SECP Secretarial Filings', pct: 82 },
+                  ].map((b) => (
+                    <div key={b.label} className="space-y-1 text-xs">
+                      <div className="flex justify-between">
+                        <span>{b.label}</span>
+                        <span className="font-mono font-semibold">{b.pct}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-slate-100">
+                        <div className="h-full rounded-full bg-emerald-600" style={{ width: `${b.pct}%` }} />
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
-
-              <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-stone-50 text-xs uppercase text-stone-500">
-                    <tr>
-                      <th className="px-5 py-3 font-semibold">Date</th>
-                      <th className="px-5 py-3 font-semibold">Description</th>
-                      <th className="px-5 py-3 font-semibold">Category</th>
-                      <th className="px-5 py-3 font-semibold text-right">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-stone-100">
-                    {filteredEntries.map((tx) => (
-                      <tr key={tx.id}>
-                        <td className="px-5 py-3 font-mono text-xs text-stone-500">{tx.date}</td>
-                        <td className="px-5 py-3 font-medium text-stone-900">{tx.description}</td>
-                        <td className="px-5 py-3 text-stone-600">{tx.category}</td>
-                        <td
-                          className={`px-5 py-3 text-right font-mono font-semibold tabular-nums ${
-                            tx.type === 'Income' ? 'text-emerald-700' : 'text-red-700'
-                          }`}
-                        >
-                          {tx.type === 'Income' ? '+' : '-'}${tx.amount.toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* INVOICES */}
-        {tab === 'invoices' && (
-          <div className="mt-8 grid gap-8 lg:grid-cols-12">
-            <form
-              onSubmit={handleCreateInvoice}
-              className="rounded-xl border border-stone-200 bg-white p-6 space-y-4 lg:col-span-6"
-            >
-              <h2 className="text-base font-bold">Interactive Invoice Builder</h2>
-              <div className="grid grid-cols-2 gap-3">
+          {tab === 'invoices' && (
+            <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-6">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
                 <div>
-                  <label htmlFor="inv-client" className="block text-xs font-semibold text-stone-700">
-                    Bill To Client
-                  </label>
+                  <h3 className="text-lg font-bold">Finora PKR Invoice Generator</h3>
+                  <p className="text-xs text-slate-500">Build itemized tax consultancy invoices &amp; export sample receipts.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={downloadSampleInvoice}
+                  className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 cursor-pointer"
+                >
+                  <Download className="h-3.5 w-3.5" /> Download Sample Invoice
+                </button>
+              </div>
+
+              {downloadNote && (
+                <p role="status" className="text-xs font-semibold text-emerald-700">
+                  {downloadNote}
+                </p>
+              )}
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="inv-client" className="text-xs font-semibold text-slate-600">Billed Client</label>
                   <input
                     id="inv-client"
-                    required
+                    type="text"
                     value={invClient}
                     onChange={(e) => setInvClient(e.target.value)}
-                    placeholder="Solis Energy Ltd."
-                    className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
                   />
                 </div>
                 <div>
-                  <label htmlFor="inv-tax" className="block text-xs font-semibold text-stone-700">
-                    Tax Rate (%)
-                  </label>
+                  <label htmlFor="inv-gst" className="text-xs font-semibold text-slate-600">Sales Tax / GST (%)</label>
                   <input
-                    id="inv-tax"
+                    id="inv-gst"
                     type="number"
-                    min={0}
-                    max={30}
-                    value={invTax}
-                    onChange={(e) => setInvTax(Number(e.target.value) || 0)}
-                    className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
+                    value={taxRate}
+                    onChange={(e) => setTaxRate(Number(e.target.value))}
+                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-mono"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-stone-700">Line Items</p>
-                {invItems.map((item, idx) => (
-                  <div key={idx} className="grid grid-cols-12 gap-2">
+                {lineItems.map((item, idx) => (
+                  <div key={idx} className="grid grid-cols-12 gap-2 items-center text-xs">
                     <input
-                      aria-label={`Item ${idx + 1} description`}
+                      type="text"
+                      aria-label={`Line item ${idx + 1} description`}
                       value={item.description}
                       onChange={(e) =>
-                        setInvItems((prev) =>
-                          prev.map((x, i) => (i === idx ? { ...x, description: e.target.value } : x)),
+                        setLineItems((prev) =>
+                          prev.map((row, i) => (i === idx ? { ...row, description: e.target.value } : row)),
                         )
                       }
-                      className="col-span-7 rounded-lg border border-stone-300 px-2.5 py-1.5 text-xs"
+                      className="col-span-6 rounded-lg border border-slate-200 px-3 py-2"
                     />
                     <input
                       type="number"
-                      min={1}
-                      aria-label={`Item ${idx + 1} quantity`}
+                      aria-label={`Line item ${idx + 1} quantity`}
                       value={item.quantity}
                       onChange={(e) =>
-                        setInvItems((prev) =>
-                          prev.map((x, i) =>
-                            i === idx ? { ...x, quantity: Number(e.target.value) || 1 } : x,
-                          ),
+                        setLineItems((prev) =>
+                          prev.map((row, i) => (i === idx ? { ...row, quantity: Number(e.target.value) } : row)),
                         )
                       }
-                      className="col-span-2 rounded-lg border border-stone-300 px-2 py-1.5 text-xs"
+                      className="col-span-2 rounded-lg border border-slate-200 px-2 py-2 font-mono text-right"
                     />
                     <input
                       type="number"
-                      min={0}
-                      aria-label={`Item ${idx + 1} price`}
+                      aria-label={`Line item ${idx + 1} unit price`}
                       value={item.unitPrice}
                       onChange={(e) =>
-                        setInvItems((prev) =>
-                          prev.map((x, i) =>
-                            i === idx ? { ...x, unitPrice: Number(e.target.value) || 0 } : x,
-                          ),
+                        setLineItems((prev) =>
+                          prev.map((row, i) => (i === idx ? { ...row, unitPrice: Number(e.target.value) } : row)),
                         )
                       }
-                      className="col-span-3 rounded-lg border border-stone-300 px-2 py-1.5 text-xs"
+                      className="col-span-4 rounded-lg border border-slate-200 px-3 py-2 font-mono text-right"
                     />
                   </div>
                 ))}
                 <button
                   type="button"
-                  onClick={() =>
-                    setInvItems((prev) => [
-                      ...prev,
-                      { description: 'QA & Launch Support', quantity: 1, unitPrice: 1200 },
-                    ])
-                  }
-                  className="text-xs font-semibold text-amber-800 hover:underline cursor-pointer"
+                  onClick={addLineItem}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:underline cursor-pointer pt-1"
                 >
-                  + Add Line Item
+                  <Plus className="h-3.5 w-3.5" /> Add Fee Line
                 </button>
               </div>
 
-              <div className="border-t border-stone-200 pt-4 space-y-1 text-sm">
-                <div className="flex justify-between text-stone-600">
-                  <span>Subtotal</span>
-                  <span className="font-mono tabular-nums">
-                    ${invoiceTotals.subtotal.toLocaleString()}
-                  </span>
+              <div className="rounded-xl bg-[#0A1628] p-5 text-white flex flex-wrap items-center justify-between gap-4 text-xs">
+                <div>
+                  <p className="text-slate-300">Subtotal: <strong className="font-mono">{formatPkr(invTotals.subtotal)}</strong></p>
+                  <p className="text-slate-300">Tax ({taxRate}%): <strong className="font-mono">{formatPkr(invTotals.taxAmount)}</strong></p>
                 </div>
-                <div className="flex justify-between text-stone-600">
-                  <span>Tax ({invTax}%)</span>
-                  <span className="font-mono tabular-nums">
-                    ${invoiceTotals.taxAmount.toLocaleString()}
-                  </span>
+                <div className="text-right">
+                  <p className="text-emerald-400 font-semibold">Total Invoice Amount</p>
+                  <p className="font-mono text-2xl font-bold tabular-nums">{formatPkr(invTotals.total)}</p>
                 </div>
-                <div className="flex justify-between font-bold text-stone-900">
-                  <span>Invoice Total</span>
-                  <span className="font-mono tabular-nums">
-                    ${invoiceTotals.total.toLocaleString()}
-                  </span>
+              </div>
+            </div>
+          )}
+
+          {tab === 'tax' && (
+            <div className="grid gap-6 lg:grid-cols-12">
+              <div className="lg:col-span-7 rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                  <h3 className="text-base font-bold">Pakistani Tax &amp; Corporate Advisory Services</h3>
+                </div>
+                <div className="grid gap-4">
+                  {TAX_SERVICES.map((s) => (
+                    <div key={s.title} className="rounded-lg border border-slate-200 p-4">
+                      <h4 className="text-sm font-bold text-[#0A1628]">{s.title}</h4>
+                      <p className="mt-1 text-xs text-slate-600">{s.desc}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              <button
-                type="submit"
-                className="w-full rounded-lg bg-[#111827] py-2.5 text-xs font-semibold text-white hover:bg-stone-800 cursor-pointer"
-              >
-                Generate Draft Invoice (Demo)
-              </button>
-            </form>
-
-            <div className="space-y-4 lg:col-span-6">
-              <h2 className="text-base font-bold">Issued Invoices</h2>
-              {invoices.map((inv) => (
-                <div
-                  key={inv.id}
-                  className="rounded-xl border border-stone-200 bg-white p-5 flex items-center justify-between"
-                >
-                  <div>
-                    <p className="font-mono text-xs font-semibold text-amber-800">{inv.id}</p>
-                    <h3 className="text-sm font-bold text-stone-900">{inv.client}</h3>
-                    <p className="text-xs text-stone-500">Due {inv.dueDate}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-mono text-base font-bold tabular-nums">
-                      ${inv.total.toLocaleString()}
-                    </p>
-                    {inv.status === 'Pending' ? (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setInvoices((prev) =>
-                            prev.map((x) => (x.id === inv.id ? { ...x, status: 'Paid' } : x)),
-                          )
-                        }
-                        className="mt-1 text-xs font-semibold text-emerald-700 underline cursor-pointer"
-                      >
-                        Mark as Paid
-                      </button>
-                    ) : (
-                      <span className="text-xs font-semibold text-emerald-700">Paid</span>
-                    )}
-                  </div>
+              <div className="lg:col-span-5 rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-emerald-600" />
+                  <h3 className="text-base font-bold">Retained Corporate Clients</h3>
                 </div>
-              ))}
+                <ul className="divide-y divide-slate-100 text-xs">
+                  {[
+                    { name: 'Crescent Textiles Ltd', city: 'Faisalabad', reg: 'NTN Active · SECP' },
+                    { name: 'PakAgro Exports (Pvt) Ltd', city: 'Multan', reg: 'NTN Active · PRA' },
+                    { name: 'Zayd Logistics Group', city: 'Lahore', reg: 'NTN Active · SRB' },
+                  ].map((c) => (
+                    <li key={c.name} className="flex justify-between py-3">
+                      <div>
+                        <p className="font-bold">{c.name}</p>
+                        <p className="text-slate-500">{c.city}</p>
+                      </div>
+                      <span className="font-mono text-emerald-700 font-semibold">{c.reg}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </section>
 
-        {/* BUDGETS & REPORTS */}
-        {tab === 'budgets' && (
-          <div className="mt-8 grid gap-6 md:grid-cols-2">
-            {BUDGETS.map((b) => {
-              const pct = Math.round((b.spent / b.allocated) * 100);
-              return (
-                <div key={b.department} className="rounded-xl border border-stone-200 bg-white p-6">
-                  <div className="flex justify-between text-sm font-bold">
-                    <span>{b.department}</span>
-                    <span className="font-mono tabular-nums text-amber-800">{pct}% used</span>
-                  </div>
-                  <div className="mt-3 h-2.5 rounded-full bg-stone-100">
-                    <div
-                      className="h-full rounded-full bg-amber-700"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                  <p className="mt-3 font-mono text-xs tabular-nums text-stone-500">
-                    ${b.spent.toLocaleString()} spent of ${b.allocated.toLocaleString()} Q4 budget
+        {/* Retainer Packages */}
+        <section id="fin-plans" className="space-y-6">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700">
+              Transparent Monthly Fees
+            </p>
+            <h2 className="mt-1 text-2xl font-bold sm:text-3xl" style={{ fontFamily: '"Outfit", sans-serif' }}>
+              Corporate Accounting &amp; CFO Retainers (PKR)
+            </h2>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-3">
+            {RETAINER_PLANS.map((plan, idx) => (
+              <div
+                key={plan.tier}
+                className={`flex flex-col justify-between rounded-2xl border p-6 ${
+                  idx === 1 ? 'border-emerald-600 bg-[#0A1628] text-white' : 'border-slate-200 bg-white'
+                }`}
+              >
+                <div>
+                  <p className={`text-xs font-semibold uppercase tracking-wider ${idx === 1 ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                    {plan.cycle}
                   </p>
+                  <h3 className="mt-1 text-xl font-bold">{plan.tier}</h3>
+                  <p className="mt-3 font-mono text-2xl font-bold tabular-nums">{formatPkr(plan.price)}</p>
+                  <ul className={`mt-4 space-y-2 text-xs ${idx === 1 ? 'text-slate-300' : 'text-slate-600'}`}>
+                    {plan.features.map((f) => (
+                      <li key={f}>· {f}</li>
+                    ))}
+                  </ul>
                 </div>
-              );
-            })}
+                <a
+                  href="#fin-consult"
+                  onClick={() => setConsultScope(plan.tier)}
+                  className={`mt-6 block rounded-lg py-2.5 text-center text-xs font-bold ${
+                    idx === 1 ? 'bg-emerald-500 text-[#0A1628]' : 'bg-[#0A1628] text-white'
+                  }`}
+                >
+                  Select Retainer Plan
+                </a>
+              </div>
+            ))}
           </div>
-        )}
+        </section>
 
-        {/* LEGAL DOCUMENT LIBRARY */}
-        {tab === 'legal' && (
-          <div className="mt-8 space-y-5">
-            <div className="relative max-w-md">
-              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-              <input
-                type="search"
-                value={docSearch}
-                onChange={(e) => setDocSearch(e.target.value)}
-                placeholder="Search NDA, MSA, IP contracts..."
-                className="w-full rounded-xl border border-stone-200 bg-white py-2.5 pl-10 pr-4 text-sm"
+        {/* Regional Practice Showcase */}
+        <section className="grid gap-6 md:grid-cols-2">
+          <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <div className="aspect-[16/9] overflow-hidden bg-slate-100">
+              <ResilientImage
+                src={DEMO_MEDIA.estateflowCommercialPlaza}
+                alt="Finora Karachi corporate headquarters on I.I. Chundrigar Road"
+                className="h-full w-full object-cover"
+                fallbackLabel="Karachi Financial Tower"
               />
             </div>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              {filteredDocs.map((doc) => (
-                <div
-                  key={doc.id}
-                  className="rounded-xl border border-stone-200 bg-white p-5 flex flex-col justify-between"
-                >
-                  <div>
-                    <p className="text-xs font-semibold text-amber-800">{doc.type}</p>
-                    <h3 className="mt-1.5 text-base font-bold text-stone-900">{doc.title}</h3>
-                    <p className="mt-2 text-xs text-stone-500">Updated {doc.updated}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedDoc(doc)}
-                    className="mt-5 text-left text-xs font-semibold text-stone-900 underline underline-offset-4 hover:text-amber-800 cursor-pointer"
-                  >
-                    Inspect Clauses
-                  </button>
-                </div>
-              ))}
+            <div className="p-5">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700">
+                I.I. Chundrigar Road, Karachi
+              </p>
+              <h3 className="mt-1 text-base font-bold text-[#0A1628]">
+                Banking, Treasury &amp; Export Tax Structuring
+              </h3>
+              <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
+                Dedicated statutory audit and IT-export exemption teams supporting Karachi trading
+                houses and logistics fleets.
+              </p>
             </div>
+          </article>
+
+          <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <div className="aspect-[16/9] overflow-hidden bg-slate-100">
+              <ResilientImage
+                src={DEMO_MEDIA.peoplefirstHrOffice}
+                alt="Finora Chartered Accountants reviewing annual SECP filings with client CFOs"
+                className="h-full w-full object-cover"
+                fallbackLabel="Islamabad Audit Chambers"
+              />
+            </div>
+            <div className="p-5">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700">
+                Blue Area, Islamabad
+              </p>
+              <h3 className="mt-1 text-base font-bold text-[#0A1628]">
+                SECP Secretarial Compliance &amp; Fractional CFO Desks
+              </h3>
+              <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
+                Board-ready monthly P&amp;L packs, PRA/SRB provincial sales tax filings, and FBR
+                withholding statement reconciliations.
+              </p>
+            </div>
+          </article>
+        </section>
+
+        {/* Partner Advisory + Testimonial + FAQ + Consultation */}
+        <section id="fin-advisory" className="grid gap-6 lg:grid-cols-12">
+          <div id="fin-faq" className="lg:col-span-6 space-y-4">
+            <h2 className="text-2xl font-bold" style={{ fontFamily: '"Outfit", sans-serif' }}>
+              Compliance FAQ &amp; Client Perspective
+            </h2>
+            {[
+              {
+                q: 'Does Finora handle SECP private limited incorporation from scratch?',
+                a: 'Yes — name reservation, digital signatures, NTN issuance, and bank resolution paperwork are handled end-to-end.',
+              },
+              {
+                q: 'Are financial reports formatted to ICAP and IFRS standards?',
+                a: 'All quarterly statements and audit working papers comply with ICAP SME/IFRS disclosures.',
+              },
+            ].map((item) => (
+              <div key={item.q} className="rounded-xl border border-slate-200 bg-white p-5 text-xs">
+                <p className="font-bold text-[#0A1628]">{item.q}</p>
+                <p className="mt-1.5 text-slate-600 leading-relaxed">{item.a}</p>
+              </div>
+            ))}
+
+            <blockquote className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-5 text-xs">
+              <div className="flex items-center justify-between text-[11px] font-semibold text-emerald-800">
+                <span>Client Review</span>
+                <span>Sample Content</span>
+              </div>
+              <p className="mt-2 leading-relaxed text-[#0A1628]">
+                &ldquo;Finora reduced our monthly FBR sales tax closing from six days to one afternoon
+                with clean vendor withholding reconciliation.&rdquo;
+              </p>
+              <footer className="mt-2 font-bold text-emerald-800">— Tariq Jamil, Finance Controller, Crescent Textiles</footer>
+            </blockquote>
           </div>
-        )}
+
+          <div id="fin-consult" className="lg:col-span-6 rounded-2xl bg-[#0A1628] p-7 text-white space-y-5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-emerald-400">
+                Chartered Advisory Desk
+              </p>
+              <h2 className="mt-1 text-2xl font-bold" style={{ fontFamily: '"Outfit", sans-serif' }}>
+                Schedule an FBR &amp; Audit Assessment
+              </h2>
+            </div>
+
+            {consultSent ? (
+              <div role="status" className="rounded-xl border border-emerald-400/40 bg-emerald-500/10 p-5 text-xs space-y-2">
+                <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+                <p className="font-bold text-white">Advisory Consultation Logged (Demo)</p>
+                <p className="text-slate-300">
+                  Request recorded for {consultName} ({consultCompany}) under {consultScope}.
+                </p>
+              </div>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!consultName.trim() || !consultCompany.trim()) return;
+                  setConsultSent(true);
+                }}
+                className="space-y-3 text-xs"
+              >
+                <input
+                  type="text"
+                  required
+                  aria-label="Contact full name"
+                  placeholder="Your Full Name"
+                  value={consultName}
+                  onChange={(e) => setConsultName(e.target.value)}
+                  className="w-full rounded-lg border border-white/15 bg-white/5 px-3.5 py-2.5 text-white placeholder:text-slate-400"
+                />
+                <input
+                  type="text"
+                  required
+                  aria-label="Company name"
+                  placeholder="Company / Business Name (Pvt Ltd or AOP)"
+                  value={consultCompany}
+                  onChange={(e) => setConsultCompany(e.target.value)}
+                  className="w-full rounded-lg border border-white/15 bg-white/5 px-3.5 py-2.5 text-white placeholder:text-slate-400"
+                />
+                <select
+                  aria-label="Advisory package"
+                  value={consultScope}
+                  onChange={(e) => setConsultScope(e.target.value)}
+                  className="w-full rounded-lg border border-white/15 bg-[#11213A] px-3.5 py-2.5 text-white"
+                >
+                  {RETAINER_PLANS.map((p) => <option key={p.tier}>{p.tier}</option>)}
+                </select>
+                <button
+                  type="submit"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-500 py-3 font-bold text-[#0A1628] hover:bg-emerald-400 cursor-pointer"
+                >
+                  <TrendingUp className="h-4 w-4" /> Submit Advisory Request (Demo)
+                </button>
+              </form>
+            )}
+          </div>
+        </section>
       </div>
 
-      {selectedDoc && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4"
-          onClick={() => setSelectedDoc(null)}
-        >
-          <div
-            className="w-full max-w-lg rounded-2xl bg-white p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase text-amber-800">{selectedDoc.type}</p>
-                <h3 className="mt-1 text-xl font-bold">{selectedDoc.title}</h3>
-              </div>
-              <button
-                type="button"
-                aria-label="Close legal preview"
-                onClick={() => setSelectedDoc(null)}
-                className="rounded p-1 hover:bg-stone-100 cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <p className="mt-4 text-sm leading-relaxed text-stone-700">
-              {selectedDoc.clauseSummary}
+      {/* Corporate Footer */}
+      <footer className="bg-[#0A1628] text-slate-400 border-t border-emerald-500/20 mt-12">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-4 text-xs">
+          <div className="md:col-span-2 space-y-2">
+            <p className="text-xl font-bold text-white" style={{ fontFamily: '"Outfit", sans-serif' }}>
+              FINORA ACCOUNTING &amp; TAX
             </p>
-            <p className="mt-4 rounded-lg bg-stone-50 p-3 text-xs text-stone-500">
-              Template clause summary for demonstration purposes only.
+            <p className="max-w-sm leading-relaxed">
+              Corporate accounting, FBR taxation, SECP compliance, and automated PKR invoicing
+              consultancy serving Pakistani enterprises.
             </p>
           </div>
+          <div className="space-y-2">
+            <p className="font-semibold text-white">Practice Areas</p>
+            <ul className="space-y-1.5">
+              <li><a href="#fin-workspace" className="hover:text-emerald-400">Financial Console</a></li>
+              <li><a href="#fin-plans" className="hover:text-emerald-400">CFO Retainers</a></li>
+              <li><a href="#fin-faq" className="hover:text-emerald-400">Compliance FAQ</a></li>
+            </ul>
+          </div>
+          <div className="space-y-2">
+            <p className="font-semibold text-white">Pakistan Offices</p>
+            <p className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-emerald-400" /> Jinnah Avenue, Blue Area, Islamabad</p>
+            <p className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 text-emerald-400" /> +92 51 280 9944</p>
+          </div>
         </div>
-      )}
+        <div className="border-t border-white/10 py-4 text-center text-[11px] text-slate-500">
+          Finora · Interactive Business Solution Demo (Sample Data Only)
+        </div>
+      </footer>
     </div>
   );
 }

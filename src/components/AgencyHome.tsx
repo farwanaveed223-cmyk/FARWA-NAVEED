@@ -520,7 +520,10 @@ export function AgencyHome({ onOpenDemo }: AgencyHomeProps) {
 
                   <div className="flex flex-1 flex-col justify-between p-7">
                     <div>
-                      <h3 className="font-display text-2xl uppercase tracking-wide text-[#F2EFEB]">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#C6A875]">
+                        {service.demoBrand}
+                      </p>
+                      <h3 className="mt-2 font-display text-2xl uppercase tracking-wide text-[#F2EFEB]">
                         {service.title}
                       </h3>
                       <p className="mt-3 text-sm leading-relaxed text-[#A09C9A]">
@@ -573,7 +576,7 @@ export function AgencyHome({ onOpenDemo }: AgencyHomeProps) {
                 <input
                   type="search"
                   aria-label="Search business solutions"
-                  placeholder="Search solutions (CRM, HR, Restaurant...)"
+                  placeholder="Search demos (Pixel Moments, EstateFlow, Finora...)"
                   value={solutionSearch}
                   onChange={(e) => setSolutionSearch(e.target.value)}
                   className="w-full rounded-full border border-[#292929] bg-[#151515]/80 py-3 pl-11 pr-4 text-sm text-[#F2EFEB] placeholder-[#A09C9A]/70 focus:border-[#C6A875] focus:outline-none"
@@ -648,7 +651,7 @@ export function AgencyHome({ onOpenDemo }: AgencyHomeProps) {
                     <div className="flex flex-1 flex-col justify-between p-7">
                       <div>
                         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#C6A875]">
-                          {item.category}
+                          {item.category} · {item.subtitle}
                         </p>
                         <h3 className="mt-2 font-display text-2xl uppercase tracking-wide text-[#F2EFEB]">
                           {item.title}
@@ -711,7 +714,10 @@ export function AgencyHome({ onOpenDemo }: AgencyHomeProps) {
                   >
                     <span className="font-display text-3xl text-[#C6A875]">{service.number}</span>
                     <div>
-                      <h3 className="font-display text-2xl uppercase tracking-wide text-[#F2EFEB] group-hover:text-[#C6A875] transition-colors">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#C6A875]">
+                        {service.demoBrand}
+                      </p>
+                      <h3 className="mt-1 font-display text-2xl uppercase tracking-wide text-[#F2EFEB] group-hover:text-[#C6A875] transition-colors">
                         {service.title}
                       </h3>
                       <p className="mt-2 max-w-2xl text-sm text-[#A09C9A]">

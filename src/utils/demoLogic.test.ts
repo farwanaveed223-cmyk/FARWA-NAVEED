@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  calculateArchitectureEstimate,
-  calculateFreightQuote,
+  calculateConstructionEstimatePkr,
+  calculateFoodOrderTotals,
   calculateInvoiceTotals,
   calculatePipelineSummary,
-  calculateRestaurantCartTotals,
   filterItemsByCategoryAndQuery,
+  formatPkr,
   getStockHealth,
   moveDealStage,
   summarizeInventory,
@@ -14,33 +14,39 @@ import {
   type InventorySku,
 } from './demoLogic';
 
-test('CRM pipeline summary computes totals, weighted forecast, and win rate', () => {
+test('formatPkr formats Pakistani Rupee amounts cleanly', () => {
+  assert.equal(formatPkr(125000), 'PKR 125,000');
+});
+
+test('EstateFlow CRM pipeline summary computes PKR totals, weighted forecast, and win rate', () => {
   const deals: CrmDeal[] = [
     {
       id: 'd1',
-      title: 'Enterprise Rollout',
-      company: 'Apex Corp',
-      value: 40000,
-      probability: 50,
-      stage: 'Proposal',
-      owner: 'Nadia',
+      title: 'DHA Phase 6 1-Kanal Villa',
+      company: 'Al-Rehman Builders',
+      city: 'Lahore',
+      valuePkr: 85000000,
+      probability: 55,
+      stage: 'Viewing',
+      owner: 'Usman Tariq',
       closeDate: '2026-12-01',
     },
     {
       id: 'd2',
-      title: 'Annual License',
-      company: 'Northstar',
-      value: 20000,
+      title: 'Clifton Block 4 Apartment',
+      company: 'Siddiqui Family',
+      city: 'Karachi',
+      valuePkr: 40000000,
       probability: 100,
       stage: 'Closed Won',
-      owner: 'Tariq',
+      owner: 'Sana Malik',
       closeDate: '2026-11-10',
     },
   ];
   const summary = calculatePipelineSummary(deals);
-  assert.equal(summary.totalPipeline, 40000);
-  assert.equal(summary.closedWonValue, 20000);
-  assert.equal(summary.weightedForecast, 40000); // 20k + 20k
+  assert.equal(summary.totalPipeline, 85000000);
+  assert.equal(summary.closedWonValue, 40000000);
+  assert.equal(summary.weightedForecast, 40000000 + Math.round(85000000 * 0.55));
   assert.equal(summary.winRate, 50);
 
   const moved = moveDealStage(deals, 'd1', 'Closed Won');
@@ -48,7 +54,7 @@ test('CRM pipeline summary computes totals, weighted forecast, and win rate', ()
   assert.equal(moved[0].probability, 100);
 });
 
-test('Inventory health and summary detect low stock and out-of-stock SKUs', () => {
+test('StockPilot inventory health and summary detect low stock and out-of-stock SKUs', () => {
   assert.equal(getStockHealth(0, 10), 'Out of Stock');
   assert.equal(getStockHealth(8, 10), 'Low Stock');
   assert.equal(getStockHealth(25, 10), 'Healthy');
@@ -56,100 +62,92 @@ test('Inventory health and summary detect low stock and out-of-stock SKUs', () =
   const skus: InventorySku[] = [
     {
       id: '1',
-      sku: 'SKU-01',
-      name: 'Thermal Printer',
-      category: 'Hardware',
+      sku: 'SP-LN-01',
+      name: 'Zari Embroidered Lawn 3-Piece',
+      category: 'Unstitched Lawn',
       stock: 5,
       reorderPoint: 10,
-      unitCost: 120,
-      supplier: 'Kova',
+      unitPricePkr: 6500,
+      supplier: 'Faisalabad Looms',
     },
     {
       id: '2',
-      sku: 'SKU-02',
-      name: 'Barcode Scanner',
-      category: 'Hardware',
+      sku: 'SP-WS-02',
+      name: 'Raw Silk Navy Waistcoat',
+      category: 'Menswear',
       stock: 0,
       reorderPoint: 8,
-      unitCost: 85,
-      supplier: 'Kova',
+      unitPricePkr: 14500,
+      supplier: 'Lahore Atelier',
     },
     {
       id: '3',
-      sku: 'SKU-03',
-      name: 'Label Rolls',
-      category: 'Supplies',
+      sku: 'SP-KT-03',
+      name: 'Ivory Cotton Kurta',
+      category: 'Pret & Kurtas',
       stock: 40,
       reorderPoint: 15,
-      unitCost: 12.5,
-      supplier: 'PackPro',
+      unitPricePkr: 4200,
+      supplier: 'Karachi Stitch',
     },
   ];
 
   const summary = summarizeInventory(skus);
   assert.equal(summary.totalUnits, 45);
-  assert.equal(summary.totalValue, 1100);
+  assert.equal(summary.totalValuePkr, 5 * 6500 + 40 * 4200);
   assert.equal(summary.outOfStockCount, 1);
   assert.equal(summary.lowStockItems.length, 2);
 });
 
-test('Invoice line items compute subtotal, tax, and total accurately', () => {
+test('Finora invoice builder calculates PKR subtotal, 17% tax, and total accurately', () => {
   const result = calculateInvoiceTotals(
     [
-      { description: 'Brand System', quantity: 1, unitPrice: 3500 },
-      { description: 'Web Development', quantity: 2, unitPrice: 1250 },
+      { description: 'Annual Audit & FBR Compliance', quantity: 1, unitPrice: 120000 },
+      { description: 'Monthly Sales Tax Return Filing', quantity: 2, unitPrice: 25000 },
     ],
-    10,
+    17,
   );
-  assert.equal(result.subtotal, 6000);
-  assert.equal(result.taxAmount, 600);
-  assert.equal(result.total, 6600);
+  assert.equal(result.subtotal, 170000);
+  assert.equal(result.taxAmount, 28900);
+  assert.equal(result.total, 198900);
 });
 
-test('Restaurant cart applies delivery fee under $65 threshold and free delivery above', () => {
-  const smallDelivery = calculateRestaurantCartTotals(
-    [{ id: 'm1', name: 'Saffron Risotto', price: 28, quantity: 1 }],
+test('Sweet Crumbs & Spice Avenue cart applies delivery fee under PKR 5,000 and free delivery above', () => {
+  const smallDelivery = calculateFoodOrderTotals(
+    [{ id: 'm1', name: 'Pistachio Rose Cupcakes (Box of 6)', price: 2400, quantity: 1 }],
     'delivery',
   );
   assert.equal(smallDelivery.itemCount, 1);
-  assert.equal(smallDelivery.deliveryFee, 5.5);
-  assert.equal(smallDelivery.subtotal, 28);
+  assert.equal(smallDelivery.deliveryFee, 250);
+  assert.equal(smallDelivery.subtotal, 2400);
 
-  const largeDelivery = calculateRestaurantCartTotals(
-    [{ id: 'm1', name: 'Wagyu Ribeye', price: 70, quantity: 1 }],
+  const largeDelivery = calculateFoodOrderTotals(
+    [{ id: 'm2', name: 'Custom 2-Tier Celebration Cake', price: 7800, quantity: 1 }],
     'delivery',
   );
   assert.equal(largeDelivery.deliveryFee, 0);
 
-  const pickup = calculateRestaurantCartTotals(
-    [{ id: 'm1', name: 'Saffron Risotto', price: 28, quantity: 1 }],
+  const pickup = calculateFoodOrderTotals(
+    [{ id: 'm1', name: 'Pistachio Rose Cupcakes (Box of 6)', price: 2400, quantity: 1 }],
     'pickup',
   );
   assert.equal(pickup.deliveryFee, 0);
 });
 
-test('Architecture and freight estimators produce bounded deterministic estimates', () => {
-  const arch = calculateArchitectureEstimate({
-    areaSqFt: 3000,
-    projectType: 'Residential',
-    tier: 'Full Design',
+test('BuildCraft PKR construction estimator produces bounded deterministic estimates', () => {
+  const estimate = calculateConstructionEstimatePkr({
+    areaSqFt: 4500,
+    projectType: 'Residential Villa',
+    finishTier: 'A-Class Finish',
   });
-  assert.ok(arch.estimatedBudgetHigh > arch.estimatedBudgetLow);
-  assert.ok(arch.timelineWeeks >= 10);
-
-  const freight = calculateFreightQuote({
-    weightKg: 500,
-    distanceKm: 1200,
-    priority: 'Express',
-  });
-  assert.ok(freight.estimatedCost > 165);
-  assert.equal(freight.transitDays, 2);
+  assert.ok(estimate.estimatedBudgetHigh > estimate.estimatedBudgetLow);
+  assert.ok(estimate.timelineMonths >= 6);
 });
 
 test('Category and search filter matches title, description, and category', () => {
   const items = [
-    { category: 'Growth', title: 'Marketing & Analytics', description: 'Traffic charts' },
-    { category: 'Operations', title: 'HR & People', description: 'Leave requests' },
+    { category: 'Growth', title: 'MarketPulse', description: 'SEO and analytics' },
+    { category: 'Operations', title: 'PeopleFirst HR', description: 'Leave approvals' },
   ];
   assert.equal(filterItemsByCategoryAndQuery(items, 'All', '').length, 2);
   assert.equal(filterItemsByCategoryAndQuery(items, 'Growth', '').length, 1);

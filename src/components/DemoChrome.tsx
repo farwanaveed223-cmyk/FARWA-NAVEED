@@ -97,7 +97,9 @@ export function DemoReturnBar({
           }`}
         >
           <Info className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          <span>Interactive Demo · Sample Data Only</span>
+          <span>
+            <span className="hidden sm:inline">Interactive Demo · </span>Sample Data Only
+          </span>
         </div>
       </div>
     </div>

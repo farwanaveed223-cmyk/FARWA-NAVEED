@@ -55,37 +55,37 @@ export default function App() {
 
   switch (activeDemo) {
     // Part 1: 10 Business Solution Demos
-    case 'portfolio-dashboard':
+    case 'pixel-moments':
       return <PortfolioDashboardDemo onBack={backToAgency} />;
-    case 'crm':
+    case 'estateflow-crm':
       return <CrmDemo onBack={backToAgency} />;
-    case 'support':
+    case 'supportsphere':
       return <SupportDemo onBack={backToAgency} />;
-    case 'team':
+    case 'teamsync':
       return <TeamDemo onBack={backToAgency} />;
-    case 'hr':
+    case 'peoplefirst-hr':
       return <HrDemo onBack={backToAgency} />;
-    case 'finance-legal':
+    case 'finora':
       return <FinanceLegalDemo onBack={backToAgency} />;
-    case 'inventory':
+    case 'stockpilot':
       return <InventoryDemo onBack={backToAgency} />;
-    case 'marketing':
+    case 'marketpulse':
       return <MarketingDemo onBack={backToAgency} />;
-    case 'education':
+    case 'edusphere':
       return <EducationDemo onBack={backToAgency} />;
-    case 'restaurant':
+    case 'sweet-crumbs-bakery':
       return <RestaurantDemo onBack={backToAgency} />;
 
-    // Part 2: 5 Website Service Demos
-    case 'business':
+    // Part 2: 5 Website Development Service Demos
+    case 'buildcraft':
       return <ServiceBusinessDemo onBack={backToAgency} />;
-    case 'landing':
+    case 'glownest':
       return <ServiceLandingDemo onBack={backToAgency} />;
-    case 'portfolio':
+    case 'hunar-interiors':
       return <ServicePortfolioDemo onBack={backToAgency} />;
-    case 'redesign':
+    case 'spice-avenue':
       return <ServiceRedesignDemo onBack={backToAgency} />;
-    case '3d':
+    case 'nexatech':
       return <Service3dDemo onBack={backToAgency} />;
 
     default:

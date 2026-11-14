@@ -1,10 +1,15 @@
-export type CrmStage = 'Qualified' | 'Proposal' | 'Negotiation' | 'Closed Won';
+export function formatPkr(amount: number): string {
+  return `PKR ${Math.round(amount).toLocaleString('en-US')}`;
+}
+
+export type CrmStage = 'Qualified' | 'Viewing' | 'Negotiation' | 'Closed Won';
 
 export interface CrmDeal {
   id: string;
   title: string;
   company: string;
-  value: number;
+  city: string;
+  valuePkr: number;
   probability: number;
   stage: CrmStage;
   owner: string;
@@ -20,7 +25,7 @@ export function calculatePipelineSummary(deals: CrmDeal[]): {
 } {
   const stageTotals: Record<CrmStage, number> = {
     Qualified: 0,
-    Proposal: 0,
+    Viewing: 0,
     Negotiation: 0,
     'Closed Won': 0,
   };
@@ -30,13 +35,13 @@ export function calculatePipelineSummary(deals: CrmDeal[]): {
   let closedWonCount = 0;
 
   for (const deal of deals) {
-    stageTotals[deal.stage] += deal.value;
+    stageTotals[deal.stage] += deal.valuePkr;
     if (deal.stage === 'Closed Won') {
       closedWonCount += 1;
-      weightedForecast += deal.value;
+      weightedForecast += deal.valuePkr;
     } else {
-      totalPipeline += deal.value;
-      weightedForecast += Math.round(deal.value * (deal.probability / 100));
+      totalPipeline += deal.valuePkr;
+      weightedForecast += Math.round(deal.valuePkr * (deal.probability / 100));
     }
   }
 
@@ -54,8 +59,8 @@ export function calculatePipelineSummary(deals: CrmDeal[]): {
 export function moveDealStage(deals: CrmDeal[], dealId: string, nextStage: CrmStage): CrmDeal[] {
   const stageProbability: Record<CrmStage, number> = {
     Qualified: 25,
-    Proposal: 50,
-    Negotiation: 75,
+    Viewing: 55,
+    Negotiation: 80,
     'Closed Won': 100,
   };
   return deals.map((deal) =>
@@ -74,7 +79,7 @@ export interface InventorySku {
   category: string;
   stock: number;
   reorderPoint: number;
-  unitCost: number;
+  unitPricePkr: number;
   supplier: string;
 }
 
@@ -86,18 +91,18 @@ export function getStockHealth(stock: number, reorderPoint: number): StockHealth
 
 export function summarizeInventory(items: InventorySku[]): {
   totalUnits: number;
-  totalValue: number;
+  totalValuePkr: number;
   lowStockItems: InventorySku[];
   outOfStockCount: number;
 } {
   let totalUnits = 0;
-  let totalValue = 0;
+  let totalValuePkr = 0;
   let outOfStockCount = 0;
   const lowStockItems: InventorySku[] = [];
 
   for (const item of items) {
     totalUnits += item.stock;
-    totalValue += item.stock * item.unitCost;
+    totalValuePkr += item.stock * item.unitPricePkr;
     const health = getStockHealth(item.stock, item.reorderPoint);
     if (health === 'Out of Stock') {
       outOfStockCount += 1;
@@ -109,7 +114,7 @@ export function summarizeInventory(items: InventorySku[]): {
 
   return {
     totalUnits,
-    totalValue: Math.round(totalValue * 100) / 100,
+    totalValuePkr: Math.round(totalValuePkr),
     lowStockItems,
     outOfStockCount,
   };
@@ -133,10 +138,10 @@ export function calculateInvoiceTotals(
     (sum, item) => sum + Math.max(0, item.quantity) * Math.max(0, item.unitPrice),
     0,
   );
-  const subtotal = Math.round(rawSubtotal * 100) / 100;
+  const subtotal = Math.round(rawSubtotal);
   const safeTax = Math.max(0, taxRatePercent);
-  const taxAmount = Math.round(subtotal * (safeTax / 100) * 100) / 100;
-  const total = Math.round((subtotal + taxAmount) * 100) / 100;
+  const taxAmount = Math.round(subtotal * (safeTax / 100));
+  const total = subtotal + taxAmount;
   return { subtotal, taxAmount, total };
 }
 
@@ -147,9 +152,11 @@ export interface CartEntry {
   quantity: number;
 }
 
-export function calculateRestaurantCartTotals(
+export function calculateFoodOrderTotals(
   entries: CartEntry[],
   orderType: 'pickup' | 'delivery',
+  freeDeliveryThresholdPkr = 5000,
+  deliveryFeePkr = 250,
 ): {
   itemCount: number;
   subtotal: number;
@@ -162,57 +169,44 @@ export function calculateRestaurantCartTotals(
     (sum, e) => sum + Math.max(0, e.quantity) * Math.max(0, e.price),
     0,
   );
-  const subtotal = Math.round(rawSubtotal * 100) / 100;
-  const tax = Math.round(subtotal * 0.085 * 100) / 100;
-  const deliveryFee = orderType === 'delivery' && subtotal > 0 && subtotal < 65 ? 5.5 : 0;
-  const total = Math.round((subtotal + tax + deliveryFee) * 100) / 100;
+  const subtotal = Math.round(rawSubtotal);
+  const tax = Math.round(subtotal * 0.05);
+  const deliveryFee =
+    orderType === 'delivery' && subtotal > 0 && subtotal < freeDeliveryThresholdPkr
+      ? deliveryFeePkr
+      : 0;
+  const total = subtotal + tax + deliveryFee;
   return { itemCount, subtotal, tax, deliveryFee, total };
 }
 
-export function calculateArchitectureEstimate(params: {
+export function calculateConstructionEstimatePkr(params: {
   areaSqFt: number;
-  projectType: 'Residential' | 'Commercial' | 'Hospitality';
-  tier: 'Concept' | 'Full Design' | 'Turnkey';
+  projectType: 'Residential Villa' | 'Commercial Plaza' | 'Corporate Fit-Out';
+  finishTier: 'Grey Structure' | 'A-Class Finish' | 'Turnkey Luxury';
 }): {
   estimatedBudgetLow: number;
   estimatedBudgetHigh: number;
-  timelineWeeks: number;
+  timelineMonths: number;
 } {
-  const safeArea = Math.max(500, Math.min(50000, params.areaSqFt));
-  const baseRate =
-    params.projectType === 'Residential' ? 320 : params.projectType === 'Commercial' ? 280 : 390;
-  const tierMultiplier =
-    params.tier === 'Concept' ? 0.08 : params.tier === 'Full Design' ? 0.14 : 0.22;
+  const safeArea = Math.max(1000, Math.min(50000, params.areaSqFt));
+  const basePerSqFt =
+    params.projectType === 'Residential Villa'
+      ? 4800
+      : params.projectType === 'Commercial Plaza'
+        ? 5400
+        : 4200;
+  const finishMultiplier =
+    params.finishTier === 'Grey Structure' ? 0.65 : params.finishTier === 'A-Class Finish' ? 1 : 1.35;
 
-  const constructionBase = safeArea * baseRate;
-  const feeMid = constructionBase * tierMultiplier;
-  const estimatedBudgetLow = Math.round((feeMid * 0.9) / 500) * 500;
-  const estimatedBudgetHigh = Math.round((feeMid * 1.15) / 500) * 500;
-  const timelineWeeks =
-    Math.round(safeArea / 1200) +
-    (params.tier === 'Concept' ? 4 : params.tier === 'Full Design' ? 10 : 18);
+  const baseCost = safeArea * basePerSqFt * finishMultiplier;
+  const estimatedBudgetLow = Math.round((baseCost * 0.92) / 50000) * 50000;
+  const estimatedBudgetHigh = Math.round((baseCost * 1.12) / 50000) * 50000;
+  const timelineMonths = Math.max(
+    4,
+    Math.round(safeArea / 1100) + (params.finishTier === 'Grey Structure' ? 3 : params.finishTier === 'A-Class Finish' ? 7 : 10),
+  );
 
-  return { estimatedBudgetLow, estimatedBudgetHigh, timelineWeeks };
-}
-
-export function calculateFreightQuote(params: {
-  weightKg: number;
-  distanceKm: number;
-  priority: 'Standard' | 'Express' | 'Cold Chain';
-}): {
-  estimatedCost: number;
-  transitDays: number;
-} {
-  const safeWeight = Math.max(10, params.weightKg);
-  const safeDistance = Math.max(50, params.distanceKm);
-  const ratePerKgKm =
-    params.priority === 'Standard' ? 0.0022 : params.priority === 'Express' ? 0.0038 : 0.0045;
-  const baseHandling = params.priority === 'Standard' ? 95 : params.priority === 'Express' ? 165 : 220;
-  const estimatedCost = Math.round((baseHandling + safeWeight * safeDistance * ratePerKgKm) * 100) / 100;
-  const speedKmPerDay =
-    params.priority === 'Express' ? 950 : params.priority === 'Cold Chain' ? 750 : 520;
-  const transitDays = Math.max(1, Math.ceil(safeDistance / speedKmPerDay));
-  return { estimatedCost, transitDays };
+  return { estimatedBudgetLow, estimatedBudgetHigh, timelineMonths };
 }
 
 export function filterItemsByCategoryAndQuery<

@@ -1,6 +1,7 @@
 export interface ServiceItem {
   number: string;
   title: string;
+  demoBrand: string;
   description: string;
   route: string;
   image: string;
@@ -11,6 +12,7 @@ export interface BusinessSolutionItem {
   number: string;
   category: 'Creative' | 'Business Systems' | 'Operations' | 'Growth' | 'Hospitality';
   title: string;
+  subtitle: string;
   description: string;
   route: string;
   image: string;
@@ -48,52 +50,57 @@ export const SERVICES: ServiceItem[] = [
   {
     number: '01',
     title: 'Website Design & Development',
+    demoBrand: 'BuildCraft',
     description:
-      'Modern, professional and responsive websites designed to build a strong online presence.',
-    route: '#/demo/business',
+      'BuildCraft — Pakistani construction and architecture website featuring residential & commercial project galleries and PKR scope estimation.',
+    route: '#/demo/buildcraft',
     image:
       'https://images.pexels.com/photos/8190827/pexels-photo-8190827.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    alt: 'Team meeting in a modern office',
+    alt: 'Construction and architecture team reviewing project blueprints',
   },
   {
     number: '02',
     title: 'Landing Page Design',
+    demoBrand: 'GlowNest',
     description:
-      'Beautiful and engaging landing pages designed to present products, services and ideas effectively.',
-    route: '#/demo/landing',
+      'GlowNest — Pakistani luxury skincare landing page built with saffron-botanical storytelling, PKR bundles, reviews and demo checkout.',
+    route: '#/demo/glownest',
     image:
       'https://images.pexels.com/photos/5088408/pexels-photo-5088408.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    alt: 'Designer working on a laptop under warm light',
+    alt: 'Creative designer crafting a skincare brand campaign on laptop',
   },
   {
     number: '03',
     title: 'Portfolio Websites',
+    demoBrand: 'Hunar Interiors',
     description:
-      'Professional personal and business portfolios to showcase work, skills and achievements.',
-    route: '#/demo/portfolio',
+      'Hunar Interiors — Pakistani luxury interior design studio showcase with residential & commercial rooms, lightbox galleries and consultation booking.',
+    route: '#/demo/hunar-interiors',
     image:
       'https://images.pexels.com/photos/4875202/pexels-photo-4875202.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    alt: 'Photographer with a camera against a dark background',
+    alt: 'Creative studio portrait and visual framing in moody lighting',
   },
   {
     number: '04',
     title: 'Website Redesign',
+    demoBrand: 'Spice Avenue',
     description:
-      'Transform outdated websites into modern, elegant and user-friendly digital experiences.',
-    route: '#/demo/redesign',
+      'Spice Avenue — Traditional Pakistani restaurant before-and-after redesign showcase with interactive ordering and table reservations.',
+    route: '#/demo/spice-avenue',
     image:
       'https://images.pexels.com/photos/6224/hands-people-woman-working.jpg?auto=compress&cs=tinysrgb&h=650&w=940',
-    alt: 'Team reviewing design sketches together',
+    alt: 'Design team comparing wireframes and restaurant redesign concepts',
   },
   {
     number: '05',
     title: '3D Website Design & Development',
+    demoBrand: 'NexaTech',
     description:
-      'Premium interactive 3D websites with cinematic hero sections, animated objects, mouse-responsive depth and smooth scroll-driven motion.',
-    route: '#/demo/3d',
+      'NexaTech — Interactive 3D WebGL technology showcase with real-time 360° orbit inspection, exploded assembly layers and material finishes.',
+    route: '#/demo/nexatech',
     image:
       'https://images.pexels.com/photos/29735307/pexels-photo-29735307.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    alt: 'Soft golden light on a dark background',
+    alt: 'Golden architectural 3D light study on obsidian surface',
   },
 ];
 
@@ -101,190 +108,200 @@ export const BUSINESS_SOLUTIONS: BusinessSolutionItem[] = [
   {
     number: '01',
     category: 'Creative',
-    title: 'Portfolio',
+    title: 'Pixel Moments',
+    subtitle: 'Photography & Creative Portfolio',
     description:
-      'A professional portfolio manager with a project gallery, skills, achievements, an experience timeline and a contact form.',
-    route: '#/demo/portfolio-dashboard',
+      'Pakistani wedding, portrait and event photography studio with filterable galleries, PKR packages and booking inquiries.',
+    route: '#/demo/pixel-moments',
     image:
       'https://images.pexels.com/photos/4549411/pexels-photo-4549411.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    alt: 'Creative professional using a camera and laptop in a studio setup',
+    alt: 'Photographer preparing camera and studio portfolio in warm light',
   },
   {
     number: '02',
     category: 'Business Systems',
-    title: 'Sales & CRM',
+    title: 'EstateFlow CRM',
+    subtitle: 'Real Estate CRM',
     description:
-      'A sales command center with a pipeline board, lead management, deal tracking, customer records and revenue charts.',
-    route: '#/demo/crm',
+      'Pakistani real estate CRM with DHA, Clifton and Bahria Town property listings, pipeline tracking, PKR deal values and analytics.',
+    route: '#/demo/estateflow-crm',
     image:
       'https://images.pexels.com/photos/39204825/pexels-photo-39204825.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    alt: 'Sales presentation with growth charts on screen',
+    alt: 'Real estate advisors presenting property revenue growth analytics',
   },
   {
     number: '03',
     category: 'Business Systems',
-    title: 'Customer Support',
+    title: 'SupportSphere',
+    subtitle: 'Customer Support',
     description:
-      'A support desk with a ticket queue, live chat simulation, status workflows, a searchable FAQ and feedback collection.',
-    route: '#/demo/support',
+      'Pakistani e-commerce support platform with live chat simulation, ticket tracking, courier order lookup, FAQ and agent queue.',
+    route: '#/demo/supportsphere',
     image:
       'https://images.pexels.com/photos/7709176/pexels-photo-7709176.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    alt: 'Headset resting on a laptop in a support workspace',
+    alt: 'Support headset and workstation for online shopping assistance',
   },
   {
     number: '04',
     category: 'Business Systems',
-    title: 'Team & Productivity',
+    title: 'TeamSync',
+    subtitle: 'Team & Productivity',
     description:
-      'A team workspace with task boards, project progress, member profiles, a shared calendar and personal to-do lists.',
-    route: '#/demo/team',
+      'Pakistani creative agency productivity workspace with Kanban boards, task assignment, deadlines, sprint calendar and team profiles.',
+    route: '#/demo/teamsync',
     image:
       'https://images.pexels.com/photos/17724731/pexels-photo-17724731.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    alt: 'Colleagues planning projects on a whiteboard',
+    alt: 'Digital agency team planning sprint milestones on whiteboard',
   },
   {
     number: '05',
     category: 'Operations',
-    title: 'HR & People',
+    title: 'PeopleFirst HR',
+    subtitle: 'HR & Recruitment',
     description:
-      'An HR hub with an employee directory, profiles, attendance tracking, leave approvals, recruitment and performance overviews.',
-    route: '#/demo/hr',
+      'Pakistani HR & recruitment hub with employee directory, job vacancies, application forms, attendance logs and leave approvals.',
+    route: '#/demo/peoplefirst-hr',
     image:
       'https://images.pexels.com/photos/5439379/pexels-photo-5439379.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    alt: 'Professional during a job interview at an office desk',
+    alt: 'HR specialist conducting a candidate recruitment interview',
   },
   {
     number: '06',
     category: 'Operations',
-    title: 'Finance & Legal',
+    title: 'Finora',
+    subtitle: 'Finance & Accounting',
     description:
-      'A finance dashboard with income and expense tracking, invoices, budgets, reports and a legal document library.',
-    route: '#/demo/finance-legal',
+      'Pakistani accounting and tax consultancy platform with PKR income/expense ledgers, invoice builder, FBR tax services and downloadable reports.',
+    route: '#/demo/finora',
     image:
       'https://images.pexels.com/photos/17065743/pexels-photo-17065743.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    alt: 'Calculator and folders on an office desk',
+    alt: 'Financial calculator and tax documentation on advisory desk',
   },
   {
     number: '07',
     category: 'Operations',
-    title: 'Operations & Inventory',
+    title: 'StockPilot',
+    subtitle: 'Operations & Inventory',
     description:
-      'An inventory system with product records, stock levels, low-stock alerts, order tracking and supplier management.',
-    route: '#/demo/inventory',
+      'Pakistani clothing & fashion brand inventory console with SKU catalog, PKR pricing, low-stock alerts, suppliers and courier orders.',
+    route: '#/demo/stockpilot',
     image:
       'https://images.pexels.com/photos/4487383/pexels-photo-4487383.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    alt: 'Workers handling packages in a stocked warehouse',
+    alt: 'Fulfillment team organizing apparel inventory packages',
   },
   {
     number: '08',
     category: 'Growth',
-    title: 'Marketing & Analytics',
+    title: 'MarketPulse',
+    subtitle: 'Marketing & Analytics',
     description:
-      'A marketing command dashboard with traffic analytics, social performance, campaign tracking and conversion reporting.',
-    route: '#/demo/marketing',
+      'Pakistani digital marketing agency showcase with SEO & social services, campaign management, conversion charts and lead capture.',
+    route: '#/demo/marketpulse',
     image:
       'https://images.pexels.com/photos/8636589/pexels-photo-8636589.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    alt: 'Workspace with analytics graphs on a monitor',
+    alt: 'Digital marketing strategist reviewing conversion analytics graphs',
   },
   {
     number: '09',
     category: 'Growth',
-    title: 'Education & Events',
+    title: 'EduSphere',
+    subtitle: 'Education & Events',
     description:
-      'An education hub with course showcases, a student dashboard, progress tracking, an event calendar and registration.',
-    route: '#/demo/education',
+      'Pakistani Computer Science & IT institute portal with CS, Web, Python & AI courses, online admission, faculty and student dashboard.',
+    route: '#/demo/edusphere',
     image:
       'https://images.pexels.com/photos/5905749/pexels-photo-5905749.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    alt: 'Teacher answering students questions during an online lesson',
+    alt: 'Computer science instructor mentoring students during class',
   },
   {
     number: '10',
     category: 'Hospitality',
-    title: 'Food & Local Business',
+    title: 'Sweet Crumbs Bakery',
+    subtitle: 'Food & Local Business',
     description:
-      'A restaurant website with a menu, online ordering, table reservations, guest reviews and location details.',
-    route: '#/demo/restaurant',
+      'Pakistani artisan bakery website with fresh cakes, custom birthday & wedding cakes, PKR cart totals, checkout simulation and reviews.',
+    route: '#/demo/sweet-crumbs-bakery',
     image:
       'https://images.pexels.com/photos/7627408/pexels-photo-7627408.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    alt: 'Dishes served on a wooden table in a modern restaurant',
+    alt: 'Artisanal baked treats and celebratory table presentation',
   },
 ];
 
 export const PORTFOLIO_CONCEPTS: PortfolioConceptItem[] = [
   {
-    id: 'northline',
+    id: 'buildcraft-arch',
     category: 'Business Websites',
-    title: 'Northline Consulting',
-    summary: 'A clean corporate site that turns visitors into consultation requests.',
+    title: 'BuildCraft',
+    summary: 'Pakistani construction & architectural firm portal with turnkey villa and commercial showcases.',
     image:
       'https://images.pexels.com/photos/7693692/pexels-photo-7693692.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    alt: 'Business professionals in a collaborative meeting',
+    alt: 'Architects and engineers discussing residential construction drawings',
     challenge:
-      'Advisory firms often overwhelm prospects with dense whitepapers before explaining how engagements actually begin.',
+      'Property developers and homeowners across Lahore and Islamabad need transparent cost estimates and verified grey-to-turnkey portfolios.',
     solution:
-      'A clear service hierarchy paired with interactive scope estimators and direct consultation booking.',
-    highlights: ['Interactive Scope Estimator', 'Case Study Metrics', 'Instant Consultation Booking'],
-    linkedDemoRoute: '#/demo/business',
+      'A structured residential and commercial showcase paired with an interactive PKR construction cost estimator and site visit request.',
+    highlights: ['PKR Construction Estimator', 'Residential & Commercial Gallery', 'Turnkey Inquiry Flow'],
+    linkedDemoRoute: '#/demo/buildcraft',
   },
   {
-    id: 'lens-light',
+    id: 'pixel-moments-studio',
     category: 'Personal Portfolios',
-    title: 'Lens & Light Studio',
-    summary: 'A moody personal portfolio that lets the work speak first.',
+    title: 'Pixel Moments',
+    summary: 'Fine-art Pakistani wedding, portrait, and heritage courtyard photography portfolio.',
     image:
       'https://images.pexels.com/photos/4875202/pexels-photo-4875202.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
     alt: 'Photographer with a DSLR camera against a dark background',
     challenge:
-      'Photographers need generous negative space and zero visual clutter so editorial series hold full attention.',
+      'Bridal couples and editorial clients want immersive high-resolution galleries and clear PKR coverage tiers before booking.',
     solution:
-      'A gallery-first layout with EXIF metadata drawers, keyboard-navigable lightbox, and edition inquiries.',
-    highlights: ['Fullscreen Lightbox', 'EXIF Camera Telemetry', 'Archival Print Inquiries'],
-    linkedDemoRoute: '#/demo/portfolio',
+      'An image-first gallery experience with lightbox inspection, PKR wedding packages, and instant date availability inquiry.',
+    highlights: ['Wedding & Portrait Galleries', 'Transparent PKR Packages', 'Booking Inquiry Form'],
+    linkedDemoRoute: '#/demo/pixel-moments',
   },
   {
-    id: 'ember-launch',
+    id: 'glownest-skincare',
     category: 'Creative Landing Pages',
-    title: 'Ember Launch Page',
-    summary: 'A single-page campaign built to introduce a product with impact.',
+    title: 'GlowNest',
+    summary: 'Minimal luxury botanical skincare landing page tailored for Pakistani consumers.',
     image:
       'https://images.pexels.com/photos/149897/pexels-photo-149897.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    alt: 'Moody workspace with a laptop and warm ambient light',
+    alt: 'Creative studio desk styling product launch visuals',
     challenge:
-      'Flagship hardware launches require tactile colorway switching and immediate clarity around technical specs.',
+      'Direct-to-consumer skincare launches require ingredient trust, clear bundle pricing in PKR, and frictionless COD ordering.',
     solution:
-      'A conversion-focused product launch page with live finish selection, spec comparisons, and pre-order simulation.',
-    highlights: ['Live Finish Selector', 'Technical Spec Matrix', 'Pre-Order Simulation'],
-    linkedDemoRoute: '#/demo/landing',
+      'A cream-and-sage conversion landing page featuring saffron & rosewater formulation details, bundles, FAQs, and simulated checkout.',
+    highlights: ['Ingredient Transparency', 'PKR Bundle Selector', 'COD Demo Checkout'],
+    linkedDemoRoute: '#/demo/glownest',
   },
   {
-    id: 'halo-creative',
+    id: 'spice-avenue-redesign',
     category: 'Agency Websites',
-    title: 'Halo Creative Agency',
-    summary: 'An agency site that showcases process, people and selected work.',
+    title: 'Spice Avenue',
+    summary: 'Before-and-after digital transformation for a flagship traditional Pakistani restaurant.',
     image:
       'https://images.pexels.com/photos/3688759/pexels-photo-3688759.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    alt: 'Top view of a design workspace with sketches and laptops',
+    alt: 'Designers reviewing before and after layout prototypes',
     challenge:
-      'Showing how an agency transforms legacy digital properties without relying on abstract buzzwords.',
+      'Legacy restaurant sites lose mobile diners with slow PDFs, broken menus, and missing online table reservation flows.',
     solution:
-      'An interactive before-and-after redesign showcase paired with measurable Core Web Vitals and conversion data.',
-    highlights: ['Interactive Before/After Slider', 'Performance Audit Breakdown', 'Live Redesigned Preview'],
-    linkedDemoRoute: '#/demo/redesign',
+      'An interactive side-by-side comparison proving speed and conversion uplift, backed by a full PKR ordering and reservation portal.',
+    highlights: ['Interactive Before/After Slider', 'Traditional Pakistani Menu', 'Table Reservations & Cart'],
+    linkedDemoRoute: '#/demo/spice-avenue',
   },
   {
-    id: 'learn-bright',
+    id: 'edusphere-institute',
     category: 'Educational Websites',
-    title: 'Learn Bright Academy',
-    summary: 'A learning platform homepage with course discovery at its core.',
+    title: 'EduSphere',
+    summary: 'Modern Pakistani Computer Science, Web Development, Python, and AI institute platform.',
     image:
       'https://images.pexels.com/photos/5934556/pexels-photo-5934556.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    alt: 'Student studying online on a laptop with learning materials',
+    alt: 'Computer science student coding on laptop with course materials',
     challenge:
-      'Students abandon course portals when schedules, progress tracking, and live events live in separate tools.',
+      'Prospective tech students struggle when course syllabi, faculty profiles, schedules, and admission forms live across scattered pages.',
     solution:
-      'A unified education hub combining course enrollment, interactive lesson progress, and event RSVPs.',
-    highlights: ['Course Enrollment', 'Interactive Lesson Tracker', 'Event Calendar & RSVP'],
-    linkedDemoRoute: '#/demo/education',
+      'An all-in-one academic platform unifying PKR course admissions, student learning progress tracking, class timetables, and tech events.',
+    highlights: ['Online Admission Form', 'Student Progress Tracker', 'Faculty & Class Schedules'],
+    linkedDemoRoute: '#/demo/edusphere',
   },
 ];
 

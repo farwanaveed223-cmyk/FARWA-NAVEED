@@ -1,678 +1,754 @@
 import React, { useMemo, useState } from 'react';
-import { Award, Briefcase, CheckCircle2, Mail, MapPin, Plus, X } from 'lucide-react';
+import { Calendar, Camera, CheckCircle2, Mail, MapPin, Phone, X } from 'lucide-react';
 import { DEMO_MEDIA } from '../../assets/demoMedia';
 import { DemoReturnBar, ResilientImage } from '../../components/DemoChrome';
+import { formatPkr } from '../../utils/demoLogic';
 
-interface PortfolioProject {
+interface PhotoSeries {
   id: string;
   title: string;
-  client: string;
-  discipline: 'Brand Systems' | 'Product Design' | 'Editorial' | 'Web Architecture';
-  year: string;
-  impact: string;
-  summary: string;
+  category: 'Wedding' | 'Portrait' | 'Event';
+  location: string;
+  date: string;
+  cameraSpec: string;
+  story: string;
   image: string;
 }
 
-const INITIAL_PROJECTS: PortfolioProject[] = [
+const PHOTO_SERIES: PhotoSeries[] = [
   {
-    id: 'p1',
-    title: 'Solstice Botanicals Rebrand',
-    client: 'Solstice Apothecary',
-    discipline: 'Brand Systems',
-    year: '2026',
-    impact: '+48% Direct Online Revenue',
-    summary:
-      'Complete visual identity, tactile packaging typography, and direct-to-consumer storefront architecture.',
-    image:
-      'https://images.pexels.com/photos/4549411/pexels-photo-4549411.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
+    id: 'pm-1',
+    title: 'Shahi Qila Courtyard Baraat',
+    category: 'Wedding',
+    location: 'Walled City, Lahore',
+    date: 'November 2026',
+    cameraSpec: 'Leica Q3 · 28mm f/1.7 · ISO 400',
+    story:
+      'Editorial dusk portraiture capturing heritage sandstone arches, hand-embroidered emerald attire, and candlelit courtyards.',
+    image: DEMO_MEDIA.pixelMomentsBridal,
   },
   {
-    id: 'p2',
-    title: 'Kestrel Financial Design System',
-    client: 'Kestrel Treasury',
-    discipline: 'Product Design',
-    year: '2026',
-    impact: '38% Faster Onboarding Flow',
-    summary:
-      'Unified multi-product UI tokens, accessible data tables, and treasury approval workflows for 140k users.',
-    image:
-      'https://images.pexels.com/photos/3688759/pexels-photo-3688759.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
+    id: 'pm-2',
+    title: 'Mehndi & Sangeet Lanterns',
+    category: 'Event',
+    location: 'Margalla Foothills, Islamabad',
+    date: 'October 2026',
+    cameraSpec: 'Sony A7R V · 50mm f/1.2 · ISO 640',
+    story:
+      'Candid documentary coverage of outdoor dholki celebrations, marigold floral canopies, and family performances.',
+    image: DEMO_MEDIA.pixelMomentsMehndi,
   },
   {
-    id: 'p3',
-    title: 'Monolith Architectural Monograph',
-    client: 'Tate & Partner Press',
-    discipline: 'Editorial',
-    year: '2025',
-    impact: 'Featured in Print Annual',
-    summary:
-      'Digital exhibition catalog and print companion celebrating brutalist concrete civic landmarks.',
+    id: 'pm-3',
+    title: 'Founder Studio Monograph',
+    category: 'Portrait',
+    location: 'Clifton Studio, Karachi',
+    date: 'September 2026',
+    cameraSpec: 'Hasselblad X2D · 80mm f/1.9 · ISO 100',
+    story:
+      'Natural-light executive and creative director portraits crafted for editorial magazines and annual brand lookbooks.',
+    image: DEMO_MEDIA.creativeDirector,
+  },
+  {
+    id: 'pm-4',
+    title: 'Faisal Mosque Morning Nikah',
+    category: 'Wedding',
+    location: 'Sector E-7, Islamabad',
+    date: 'August 2026',
+    cameraSpec: 'Canon R5 · 85mm f/1.4 · ISO 200',
+    story:
+      'Intimate daytime nikah storytelling anchored around white travertine geometry and serene family vows.',
     image: DEMO_MEDIA.editorialGallery,
   },
   {
-    id: 'p4',
-    title: 'Verve Hospitality Flagship',
-    client: 'Verve Hotels Group',
-    discipline: 'Web Architecture',
-    year: '2025',
-    impact: '2.4x Direct Suite Bookings',
-    summary:
-      'Multilingual reservation platform and editorial property guides across 11 boutique European locations.',
+    id: 'pm-5',
+    title: 'Karachi Fashion Week Backstage',
+    category: 'Event',
+    location: 'Beach Luxury Hotel, Karachi',
+    date: 'July 2026',
+    cameraSpec: 'Leica SL3 · 35mm f/1.4 · ISO 800',
+    story:
+      'Fast-paced backstage runway documentation spotlighting Pakistani textile designers, tailoring, and spotlight choreography.',
+    image: DEMO_MEDIA.stockpilotApparel,
+  },
+  {
+    id: 'pm-6',
+    title: 'Architect at Golden Hour',
+    category: 'Portrait',
+    location: 'Gulberg III, Lahore',
+    date: 'June 2026',
+    cameraSpec: 'Sony A7R V · 35mm f/1.4 · ISO 160',
+    story:
+      'Environmental portrait series framed inside concrete and timber courtyard residences across Lahore.',
     image: DEMO_MEDIA.architectureHero,
   },
 ];
 
-const SKILLS = [
-  { name: 'Design Systems & UI Architecture', level: 96, group: 'Product' },
-  { name: 'Brand Identity & Art Direction', level: 94, group: 'Brand' },
-  { name: 'React, TypeScript & Motion Systems', level: 89, group: 'Engineering' },
-  { name: 'Editorial Typography & Print', level: 92, group: 'Brand' },
-  { name: 'Design Research & Prototyping', level: 90, group: 'Product' },
-  { name: 'Accessibility & WCAG Audits', level: 88, group: 'Engineering' },
+const PACKAGES = [
+  {
+    id: 'nikah',
+    name: 'Nikah & Couple Portrait',
+    pricePkr: 85000,
+    duration: '5 Hours · 1 Lead Photographer',
+    deliverables: [
+      '180 color-graded high-resolution images',
+      '1 handcrafted linen photo album (25 spreads)',
+      'Private online gallery delivered in 10 days',
+    ],
+  },
+  {
+    id: 'signature',
+    name: 'Signature Baraat / Walima',
+    pricePkr: 185000,
+    duration: 'Full Day · 2 Photographers + Assistant',
+    deliverables: [
+      '450+ edited documentary & editorial frames',
+      'Same-night 20 sneak-peek frames on WhatsApp',
+      'Premium 40-spread Italian leather coffee-table book',
+    ],
+  },
+  {
+    id: 'heritage',
+    name: 'Complete 3-Day Bridal Story',
+    pricePkr: 340000,
+    duration: 'Mehndi, Baraat & Walima · Full Crew',
+    deliverables: [
+      '1,100+ curated archival images + 4K highlight film',
+      'Two parent keepsake albums & bespoke wooden box',
+      'Travel covered across Lahore, Islamabad & Karachi',
+    ],
+  },
 ];
 
-const TIMELINE = [
+const SAMPLE_TESTIMONIALS = [
   {
-    period: '2023 — Present',
-    role: 'Principal Creative Director',
-    org: 'Elena Vance Studio (Independent Practice)',
-    detail: 'Leading brand and product engagements for Series A–C software and lifestyle founders.',
+    quote:
+      'Pixel Moments captured our Shahi Qila Nikah with such calm poise. Every frame feels like a timeless painting.',
+    author: 'Zoya & Bilal Mansoor',
+    event: 'Lahore Wedding · Sample Testimonial',
   },
   {
-    period: '2020 — 2023',
-    role: 'Design Director, Digital Flagships',
-    org: 'Morrow & Co., London',
-    detail: 'Directed cross-functional teams of 14 designers and front-end engineers across global launches.',
-  },
-  {
-    period: '2017 — 2020',
-    role: 'Senior Product Designer',
-    org: 'Latticework Labs',
-    detail: 'Designed core analytics dashboards and collaborative workflow tools.',
+    quote:
+      'Our entire executive leadership portrait shoot in Clifton wrapped on schedule with remarkable editorial clarity.',
+    author: 'Tariq Mahmood, Partner at Indus Ventures',
+    event: 'Karachi Portrait Commission · Sample Testimonial',
   },
 ];
 
 export function PortfolioDashboardDemo({ onBack }: { onBack: () => void }) {
-  const [projects, setProjects] = useState<PortfolioProject[]>(INITIAL_PROJECTS);
-  const [activeDiscipline, setActiveDiscipline] = useState<string>('All');
-  const [selectedProject, setSelectedProject] = useState<PortfolioProject | null>(null);
-  const [skillFilter, setSkillFilter] = useState<string>('All');
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [category, setCategory] = useState<'All' | 'Wedding' | 'Portrait' | 'Event'>('All');
+  const [lightboxItem, setLightboxItem] = useState<PhotoSeries | null>(null);
+  const [selectedPkg, setSelectedPkg] = useState<string>('Signature Baraat / Walima');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [eventDate, setEventDate] = useState('');
+  const [city, setCity] = useState('Lahore');
+  const [notes, setNotes] = useState('');
+  const [error, setError] = useState('');
+  const [submitted, setSubmitted] = useState(false);
 
-  const [newTitle, setNewTitle] = useState('');
-  const [newClient, setNewClient] = useState('');
-  const [newDiscipline, setNewDiscipline] =
-    useState<PortfolioProject['discipline']>('Brand Systems');
-  const [newImpact, setNewImpact] = useState('');
-  const [newSummary, setNewSummary] = useState('');
-
-  const [inquiryName, setInquiryName] = useState('');
-  const [inquiryEmail, setInquiryEmail] = useState('');
-  const [inquiryMessage, setInquiryMessage] = useState('');
-  const [inquiryError, setInquiryError] = useState('');
-  const [inquirySent, setInquirySent] = useState(false);
-
-  const visibleProjects = useMemo(
+  const visibleGallery = useMemo(
     () =>
-      projects.filter(
-        (p) => activeDiscipline === 'All' || p.discipline === activeDiscipline,
-      ),
-    [projects, activeDiscipline],
+      category === 'All'
+        ? PHOTO_SERIES
+        : PHOTO_SERIES.filter((item) => item.category === category),
+    [category],
   );
 
-  const visibleSkills = useMemo(
-    () => SKILLS.filter((s) => skillFilter === 'All' || s.group === skillFilter),
-    [skillFilter],
-  );
-
-  const handleAddProject = (e: React.FormEvent) => {
+  const handleBook = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim() || !newClient.trim() || !newSummary.trim()) return;
-    const created: PortfolioProject = {
-      id: `p-${Date.now()}`,
-      title: newTitle.trim(),
-      client: newClient.trim(),
-      discipline: newDiscipline,
-      year: '2026',
-      impact: newImpact.trim() || 'Client Launch Complete',
-      summary: newSummary.trim(),
-      image: DEMO_MEDIA.creativeDirector,
-    };
-    setProjects((prev) => [created, ...prev]);
-    setNewTitle('');
-    setNewClient('');
-    setNewImpact('');
-    setNewSummary('');
-    setShowAddModal(false);
-  };
-
-  const handleInquiry = (e: React.FormEvent) => {
-    e.preventDefault();
-    setInquiryError('');
-    if (!inquiryName.trim() || !inquiryEmail.trim() || !inquiryMessage.trim()) {
-      setInquiryError('Please fill in all inquiry fields.');
+    setError('');
+    if (!name.trim() || !phone.trim() || !eventDate) {
+      setError('Please enter your name, phone number, and preferred event date.');
       return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inquiryEmail.trim())) {
-      setInquiryError('Please enter a valid email address.');
-      return;
-    }
-    setInquirySent(true);
+    setSubmitted(true);
   };
 
   return (
     <div
-      className="min-h-screen bg-[#FAF8F5] text-[#171717]"
+      className="min-h-screen bg-[#0E0D0C] text-[#F7F4EF]"
       style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}
     >
       <DemoReturnBar
-        demoName="Portfolio Website Manager"
-        clientBrand="Elena Vance Studio"
-        categoryLabel="Creative"
+        demoName="Photography & Creative Portfolio"
+        clientBrand="Pixel Moments"
+        categoryLabel="Business Demo 01"
         onBack={onBack}
+        theme="dark"
       />
 
-      {/* Clean 3-zone header */}
-      <header className="border-b border-[#E7E2DA] bg-[#FAF8F5]">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-8 px-6 py-5">
-          <a
-            href="#profile"
-            className="text-xl font-semibold tracking-tight whitespace-nowrap shrink-0"
+      {/* Top Navigation Bar */}
+      <header className="border-b border-white/10">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-8 px-4 py-5 sm:px-6">
+          <span
+            className="text-xl font-semibold tracking-tight text-[#D4AF37] whitespace-nowrap shrink-0"
             style={{ fontFamily: '"Cormorant Garamond", serif' }}
           >
-            Elena Vance
-          </a>
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-neutral-600">
-            <a href="#pv-profile" className="hover:text-neutral-950 whitespace-nowrap">
-              Profile
-            </a>
-            <a href="#pv-projects" className="hover:text-neutral-950 whitespace-nowrap">
-              Projects
-            </a>
-            <a href="#pv-skills" className="hover:text-neutral-950 whitespace-nowrap">
-              Skills
-            </a>
-            <a href="#pv-experience" className="hover:text-neutral-950 whitespace-nowrap">
-              Experience
-            </a>
+            Pixel Moments
+          </span>
+          <nav aria-label="Studio navigation" className="hidden md:flex items-center gap-7 text-xs font-medium text-neutral-300">
+            <a href="#pm-about" className="hover:text-[#D4AF37] whitespace-nowrap shrink-0">Photographer</a>
+            <a href="#pm-gallery" className="hover:text-[#D4AF37] whitespace-nowrap shrink-0">Galleries</a>
+            <a href="#pm-packages" className="hover:text-[#D4AF37] whitespace-nowrap shrink-0">PKR Packages</a>
+            <a href="#pm-book" className="hover:text-[#D4AF37] whitespace-nowrap shrink-0">Contact</a>
           </nav>
           <a
-            href="#pv-contact"
-            className="rounded-lg bg-[#9A3412] px-4 py-2 text-xs font-semibold text-white hover:bg-[#7C2D12] whitespace-nowrap shrink-0"
+            href="#pm-book"
+            className="rounded-lg bg-[#D4AF37] px-4 py-2 text-xs font-bold text-[#0E0D0C] hover:bg-[#E3C45B] whitespace-nowrap shrink-0"
           >
-            Book Consultation
+            Book a Shoot
           </a>
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-12 space-y-20">
-        {/* Profile Hero */}
-        <section id="pv-profile" className="grid items-stretch gap-10 lg:grid-cols-12">
-          <div className="flex flex-col justify-between lg:col-span-7">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 space-y-20">
+        {/* Cinematic Hero Split */}
+        <section className="grid items-stretch gap-10 lg:grid-cols-12">
+          <div className="flex flex-col justify-between py-2 lg:col-span-6">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#9A3412]">
-                Creative Director · Brand &amp; Product Systems
+              <p className="text-xs font-medium tracking-widest uppercase text-[#D4AF37]">
+                Lahore · Islamabad · Karachi
               </p>
               <h1
-                className="mt-4 text-4xl font-semibold leading-[1.08] tracking-tight sm:text-5xl"
-                style={{ fontFamily: '"Cormorant Garamond", serif' }}
+                className="mt-4 text-4xl font-semibold leading-[1.06] tracking-tight sm:text-6xl"
+                style={{ fontFamily: '"Cormorant Garamond", serif', textWrap: 'balance' }}
               >
-                Designing enduring digital flagships for ambitious founders.
+                Timeless Pakistani weddings, portraits &amp; visual stories.
               </h1>
-              <p className="mt-5 max-w-xl text-base leading-relaxed text-neutral-600">
-                Sample portfolio system demonstrating how creatives present curated work,
-                quantifiable project outcomes, technical capabilities, and direct booking inquiries.
+              <p className="mt-5 max-w-lg text-sm leading-relaxed text-neutral-300">
+                Founded by Hamza Qureshi, Pixel Moments crafts fine-art wedding stories, intimate
+                studio portraits, and cultural event photography rooted in natural light and human
+                emotion.
               </p>
             </div>
-
-            <div className="mt-8 grid grid-cols-3 gap-6 border-t border-[#E7E2DA] pt-6">
-              <div>
-                <p className="text-2xl font-bold tabular-nums text-neutral-900">9+ yrs</p>
-                <p className="mt-1 text-xs text-neutral-500">Studio Experience</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold tabular-nums text-neutral-900">42</p>
-                <p className="mt-1 text-xs text-neutral-500">Shipped Systems</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold tabular-nums text-neutral-900">4</p>
-                <p className="mt-1 text-xs text-neutral-500">Design Honors</p>
-              </div>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a
+                href="#pm-gallery"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#D4AF37] px-5 py-3 text-xs font-bold text-[#0E0D0C] hover:bg-[#E3C45B]"
+              >
+                <Camera className="h-4 w-4" aria-hidden="true" />
+                Explore Galleries
+              </a>
+              <a
+                href="#pm-packages"
+                className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-5 py-3 text-xs font-semibold text-white hover:border-[#D4AF37]"
+              >
+                View PKR Packages
+              </a>
             </div>
           </div>
 
+          <div className="lg:col-span-6">
+            <div className="h-full min-h-[340px] overflow-hidden rounded-2xl border border-white/10">
+              <ResilientImage
+                src={DEMO_MEDIA.pixelMomentsBridal}
+                alt="Editorial bridal portrait in historic Lahore courtyard"
+                className="h-full w-full object-cover"
+                fallbackLabel="Pixel Moments Lahore"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Full-Width Metrics Row */}
+        <section className="grid grid-cols-2 gap-6 border-y border-white/10 py-8 sm:grid-cols-4">
+          <div>
+            <p className="font-mono text-2xl font-bold tabular-nums text-[#D4AF37]">240+</p>
+            <p className="mt-1 text-xs text-neutral-400">Weddings Documented</p>
+          </div>
+          <div>
+            <p className="font-mono text-2xl font-bold tabular-nums text-white">9 Years</p>
+            <p className="mt-1 text-xs text-neutral-400">Editorial Craft</p>
+          </div>
+          <div>
+            <p className="font-mono text-2xl font-bold tabular-nums text-white">72 Hours</p>
+            <p className="mt-1 text-xs text-neutral-400">Sneak-Peek Delivery</p>
+          </div>
+          <div>
+            <p className="font-mono text-2xl font-bold tabular-nums text-white">3 Cities</p>
+            <p className="mt-1 text-xs text-neutral-400">LHE · ISB · KHI</p>
+          </div>
+        </section>
+
+        {/* Photographer Introduction */}
+        <section id="pm-about" className="grid items-center gap-10 lg:grid-cols-12">
           <div className="lg:col-span-5">
-            <div className="relative h-full min-h-[320px] overflow-hidden rounded-2xl border border-[#E7E2DA]">
+            <div className="aspect-[4/5] overflow-hidden rounded-2xl border border-white/10">
               <ResilientImage
                 src={DEMO_MEDIA.creativeDirector}
-                alt="Elena Vance portrait in studio"
+                alt="Hamza Qureshi — Lead Photographer at Pixel Moments"
                 className="h-full w-full object-cover"
-                fallbackLabel="Elena Vance"
+                fallbackLabel="Hamza Qureshi"
               />
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent p-6 text-white">
-                <p className="flex items-center gap-2 text-xs font-medium text-white/90">
-                  <MapPin className="h-3.5 w-3.5" /> London &amp; Remote Worldwide
-                </p>
+            </div>
+          </div>
+          <div className="lg:col-span-7 space-y-5">
+            <p className="text-xs font-medium uppercase tracking-widest text-[#D4AF37]">
+              Meet The Lead Photographer
+            </p>
+            <h2
+              className="text-3xl font-semibold sm:text-4xl"
+              style={{ fontFamily: '"Cormorant Garamond", serif' }}
+            >
+              Hamza Qureshi — Seeing heritage with quiet honesty.
+            </h2>
+            <p className="text-sm leading-relaxed text-neutral-300">
+              Trained in documentary visual arts in Lahore, Hamza leads a six-person team across
+              Punjab, Islamabad, and Sindh. Rather than forced poses, Pixel Moments observes fleeting
+              smiles during a morning Nikah, intricate zardozi craftsmanship, and candid embraces on
+              the mehndi floor.
+            </p>
+            <div className="grid gap-4 pt-2 sm:grid-cols-3 text-xs text-neutral-300">
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="font-semibold text-[#D4AF37]">Wedding Storytelling</p>
+                <p className="mt-1 text-neutral-400">Mayoun, Mehndi, Nikah, Baraat &amp; Walima coverage.</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="font-semibold text-[#D4AF37]">Studio Portraits</p>
+                <p className="mt-1 text-neutral-400">Editorial lookbooks, family heirlooms &amp; leadership.</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="font-semibold text-[#D4AF37]">Cultural Events</p>
+                <p className="mt-1 text-neutral-400">Brand launches, exhibitions &amp; private galas.</p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Projects Gallery */}
-        <section id="pv-projects">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        {/* Image Galleries */}
+        <section id="pm-gallery" className="space-y-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
+              <p className="text-xs font-medium uppercase tracking-widest text-[#D4AF37]">
+                Curated Portfolios
+              </p>
               <h2
-                className="text-3xl font-semibold tracking-tight"
+                className="mt-2 text-3xl font-semibold sm:text-4xl"
                 style={{ fontFamily: '"Cormorant Garamond", serif' }}
               >
-                Selected Projects Gallery
+                Selected Photo Series
               </h2>
-              <p className="mt-1 text-sm text-neutral-600">
-                Filter by discipline, inspect case studies, or add a sample project entry.
-              </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-neutral-900 px-4 py-2 text-xs font-semibold text-white hover:bg-neutral-700 whitespace-nowrap cursor-pointer self-start"
-            >
-              <Plus className="h-3.5 w-3.5" /> Add Project
-            </button>
-          </div>
 
-          <div className="mt-6 flex flex-wrap gap-2" role="group" aria-label="Filter projects">
-            {['All', 'Brand Systems', 'Product Design', 'Editorial', 'Web Architecture'].map(
-              (disc) => (
+            <div className="inline-flex gap-1 rounded-lg bg-white/5 p-1">
+              {(['All', 'Wedding', 'Portrait', 'Event'] as const).map((cat) => (
                 <button
-                  key={disc}
+                  key={cat}
                   type="button"
-                  onClick={() => setActiveDiscipline(disc)}
-                  className={`rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors cursor-pointer ${
-                    activeDiscipline === disc
-                      ? 'bg-[#9A3412] text-white'
-                      : 'border border-[#E7E2DA] bg-white text-neutral-700 hover:border-neutral-400'
+                  onClick={() => setCategory(cat)}
+                  className={`rounded-md px-3.5 py-1.5 text-xs font-semibold cursor-pointer whitespace-nowrap transition-colors ${
+                    category === cat
+                      ? 'bg-[#D4AF37] text-[#0E0D0C]'
+                      : 'text-neutral-300 hover:text-white'
                   }`}
                 >
-                  {disc}
+                  {cat}
                 </button>
-              ),
-            )}
+              ))}
+            </div>
           </div>
 
-          <div className="mt-8 grid gap-6 md:grid-cols-2">
-            {visibleProjects.map((project) => (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {visibleGallery.map((item) => (
               <article
-                key={project.id}
-                className="overflow-hidden rounded-2xl border border-[#E7E2DA] bg-white transition-shadow hover:shadow-md"
+                key={item.id}
+                className="group overflow-hidden rounded-2xl border border-white/10 bg-[#151412]"
               >
-                <div className="aspect-[16/10] overflow-hidden bg-neutral-100">
-                  <ResilientImage
-                    src={project.image}
-                    alt={project.title}
-                    className="h-full w-full object-cover"
-                    fallbackLabel={project.title}
-                  />
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center gap-2 text-xs text-neutral-500">
-                    <span>{project.discipline}</span>
-                    <span aria-hidden="true">·</span>
-                    <span>{project.client}</span>
-                    <span aria-hidden="true">·</span>
-                    <span className="tabular-nums">{project.year}</span>
+                <button
+                  type="button"
+                  onClick={() => setLightboxItem(item)}
+                  className="block w-full text-left cursor-pointer"
+                >
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <ResilientImage
+                      src={item.image}
+                      alt={item.title}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      fallbackLabel={item.title}
+                    />
                   </div>
-                  <h3 className="mt-2 text-xl font-semibold text-neutral-900">{project.title}</h3>
-                  <p className="mt-2 text-sm text-neutral-600">{project.summary}</p>
-                  <div className="mt-5 flex items-center justify-between border-t border-[#F0ECE4] pt-4">
-                    <span className="text-xs font-semibold text-[#9A3412]">{project.impact}</span>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedProject(project)}
-                      className="text-xs font-semibold text-neutral-900 underline underline-offset-4 hover:text-[#9A3412] cursor-pointer"
-                    >
-                      View Case Study
-                    </button>
+                  <div className="p-5">
+                    <div className="flex items-center gap-2 text-xs text-neutral-400">
+                      <span className="text-[#D4AF37]">{item.category}</span>
+                      <span aria-hidden="true">·</span>
+                      <span>{item.location}</span>
+                    </div>
+                    <h3 className="mt-1.5 text-lg font-semibold text-white">{item.title}</h3>
+                    <p className="mt-2 line-clamp-2 text-xs text-neutral-400">{item.story}</p>
                   </div>
-                </div>
+                </button>
               </article>
             ))}
           </div>
         </section>
 
-        {/* Skills & Achievements */}
-        <section id="pv-skills" className="grid gap-12 lg:grid-cols-12">
-          <div className="lg:col-span-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <h2
-                className="text-3xl font-semibold tracking-tight"
-                style={{ fontFamily: '"Cormorant Garamond", serif' }}
-              >
-                Core Capabilities
-              </h2>
-              <div className="flex gap-1 rounded-lg bg-[#EFEAE2] p-1">
-                {['All', 'Product', 'Brand', 'Engineering'].map((grp) => (
-                  <button
-                    key={grp}
-                    type="button"
-                    onClick={() => setSkillFilter(grp)}
-                    className={`rounded-md px-2.5 py-1 text-xs font-medium cursor-pointer ${
-                      skillFilter === grp ? 'bg-white text-neutral-900 shadow-xs' : 'text-neutral-600'
-                    }`}
-                  >
-                    {grp}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-6 space-y-5 rounded-2xl border border-[#E7E2DA] bg-white p-6">
-              {visibleSkills.map((skill) => (
-                <div key={skill.name}>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-neutral-900">{skill.name}</span>
-                    <span className="tabular-nums font-semibold text-[#9A3412]">
-                      {skill.level}%
-                    </span>
-                  </div>
-                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#EFEAE2]">
-                    <div
-                      className="h-full rounded-full bg-[#9A3412] transition-all duration-500"
-                      style={{ width: `${skill.level}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div id="pv-experience" className="lg:col-span-6">
+        {/* PKR Photography Packages */}
+        <section id="pm-packages" className="space-y-8 border-t border-white/10 pt-14">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-widest text-[#D4AF37]">
+              Transparent Investment
+            </p>
             <h2
-              className="text-3xl font-semibold tracking-tight"
+              className="mt-2 text-3xl font-semibold sm:text-4xl"
               style={{ fontFamily: '"Cormorant Garamond", serif' }}
             >
-              Experience &amp; Recognition
+              Photography Packages (PKR)
             </h2>
-            <div className="mt-6 space-y-6 rounded-2xl border border-[#E7E2DA] bg-white p-6">
-              {TIMELINE.map((item) => (
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            {PACKAGES.map((pkg) => {
+              const isSelected = selectedPkg === pkg.name;
+              return (
                 <div
-                  key={item.period}
-                  className="border-b border-[#F0ECE4] pb-5 last:border-b-0 last:pb-0"
+                  key={pkg.id}
+                  className={`flex flex-col justify-between rounded-2xl border p-7 transition-colors ${
+                    isSelected
+                      ? 'border-[#D4AF37] bg-[#191611]'
+                      : 'border-white/10 bg-[#151412]'
+                  }`}
                 >
-                  <div className="flex items-center gap-2 text-xs font-medium text-[#9A3412]">
-                    <Briefcase className="h-3.5 w-3.5" />
-                    <span>{item.period}</span>
+                  <div>
+                    <p className="text-xs text-neutral-400">{pkg.duration}</p>
+                    <h3 className="mt-2 text-xl font-semibold text-white">{pkg.name}</h3>
+                    <p className="mt-4 font-mono text-2xl font-bold tabular-nums text-[#D4AF37]">
+                      {formatPkr(pkg.pricePkr)}
+                    </p>
+                    <ul className="mt-5 space-y-2.5 border-t border-white/10 pt-5 text-xs text-neutral-300">
+                      {pkg.deliverables.map((d) => (
+                        <li key={d} className="flex items-start gap-2">
+                          <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#D4AF37]" />
+                          <span>{d}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <h3 className="mt-1.5 text-base font-semibold text-neutral-900">{item.role}</h3>
-                  <p className="text-xs font-medium text-neutral-500">{item.org}</p>
-                  <p className="mt-2 text-sm text-neutral-600">{item.detail}</p>
+
+                  <a
+                    href="#pm-book"
+                    onClick={() => setSelectedPkg(pkg.name)}
+                    className={`mt-7 block rounded-lg py-2.5 text-center text-xs font-bold transition-colors ${
+                      isSelected
+                        ? 'bg-[#D4AF37] text-[#0E0D0C]'
+                        : 'border border-white/20 text-white hover:border-[#D4AF37]'
+                    }`}
+                  >
+                    {isSelected ? 'Selected for Inquiry' : 'Choose Package'}
+                  </a>
                 </div>
-              ))}
-              <div className="flex items-center gap-3 rounded-xl bg-[#FAF8F5] p-4 text-xs text-neutral-700">
-                <Award className="h-4 w-4 text-[#9A3412] shrink-0" />
-                <span>2025 European Design Award · 2024 Type Directors Club Certificate</span>
-              </div>
-            </div>
+              );
+            })}
           </div>
         </section>
 
-        {/* Contact Form */}
-        <section id="pv-contact" className="rounded-2xl border border-[#E7E2DA] bg-white p-8 md:p-10">
-          <div className="grid gap-10 lg:grid-cols-12">
-            <div className="lg:col-span-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9A3412]">
-                Project Availability
-              </p>
-              <h2
-                className="mt-2 text-3xl font-semibold"
-                style={{ fontFamily: '"Cormorant Garamond", serif' }}
+        {/* Sample Customer Testimonials */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2
+              className="text-2xl font-semibold sm:text-3xl"
+              style={{ fontFamily: '"Cormorant Garamond", serif' }}
+            >
+              Client Reflections
+            </h2>
+            <span className="text-xs text-neutral-400">Sample Content · Demonstration Reviews</span>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            {SAMPLE_TESTIMONIALS.map((item) => (
+              <blockquote
+                key={item.author}
+                className="rounded-2xl border border-white/10 bg-[#151412] p-6"
               >
-                Start a conversation
-              </h2>
-              <p className="mt-3 text-sm leading-relaxed text-neutral-600">
-                Currently scheduling Q1–Q2 brand systems and product architecture retainers. All
-                submissions below are simulated inside this demo.
+                <p className="text-sm leading-relaxed text-neutral-200">&ldquo;{item.quote}&rdquo;</p>
+                <footer className="mt-4 text-xs text-neutral-400">
+                  <strong className="text-white">{item.author}</strong> · {item.event}
+                </footer>
+              </blockquote>
+            ))}
+          </div>
+        </section>
+
+        {/* Booking Inquiry Form & Studio Contact */}
+        <section
+          id="pm-book"
+          className="grid gap-10 rounded-2xl border border-white/10 bg-[#151412] p-7 lg:grid-cols-12 sm:p-10"
+        >
+          <div className="lg:col-span-5 space-y-5">
+            <p className="text-xs font-medium uppercase tracking-widest text-[#D4AF37]">
+              Reserve Your Date
+            </p>
+            <h2
+              className="text-3xl font-semibold"
+              style={{ fontFamily: '"Cormorant Garamond", serif' }}
+            >
+              Pixel Moments Booking Inquiry
+            </h2>
+            <p className="text-sm leading-relaxed text-neutral-300">
+              Share your event date and venue city. Our studio coordinator responds within 24 hours
+              with date availability and custom album add-ons.
+            </p>
+            <div className="space-y-3 border-t border-white/10 pt-5 text-xs text-neutral-300">
+              <p className="flex items-center gap-2.5">
+                <MapPin className="h-4 w-4 text-[#D4AF37]" /> Studio 14-B, MM Alam Road, Gulberg III, Lahore
               </p>
-              <p className="mt-6 flex items-center gap-2 text-sm font-medium text-neutral-800">
-                <Mail className="h-4 w-4 text-[#9A3412]" /> elena@vance-studio.example
+              <p className="flex items-center gap-2.5">
+                <Phone className="h-4 w-4 text-[#D4AF37]" /> +92 300 412 8890 (Sample Studio Line)
+              </p>
+              <p className="flex items-center gap-2.5">
+                <Mail className="h-4 w-4 text-[#D4AF37]" /> bookings@pixelmoments.pk (Sample)
               </p>
             </div>
+          </div>
 
-            <div className="lg:col-span-7">
-              {inquirySent ? (
-                <div className="rounded-xl bg-[#FAF8F5] p-6" role="status">
-                  <CheckCircle2 className="h-6 w-6 text-emerald-700" />
-                  <h3 className="mt-3 text-lg font-semibold">Demo Inquiry Logged</h3>
-                  <p className="mt-1 text-sm text-neutral-600">
-                    Thank you, {inquiryName}. Your sample inquiry has been recorded in this preview
-                    session.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setInquirySent(false);
-                      setInquiryName('');
-                      setInquiryEmail('');
-                      setInquiryMessage('');
-                    }}
-                    className="mt-4 rounded-lg border border-neutral-300 px-4 py-2 text-xs font-semibold hover:bg-neutral-100 cursor-pointer"
-                  >
-                    Reset Form
-                  </button>
+          <div className="lg:col-span-7">
+            {submitted ? (
+              <div className="rounded-xl border border-[#D4AF37]/40 bg-[#0E0D0C] p-6" role="status">
+                <CheckCircle2 className="h-7 w-7 text-[#D4AF37]" />
+                <h3 className="mt-3 text-xl font-semibold text-white">
+                  Simulated Booking Inquiry Recorded
+                </h3>
+                <p className="mt-2 text-sm text-neutral-300">
+                  Thank you, <strong>{name}</strong>. Your simulated inquiry for{' '}
+                  <strong>{selectedPkg}</strong> in <strong>{city}</strong> on{' '}
+                  <strong>{eventDate}</strong> has been logged in this demo preview.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubmitted(false);
+                    setName('');
+                    setPhone('');
+                    setNotes('');
+                  }}
+                  className="mt-5 rounded-lg border border-white/20 px-4 py-2 text-xs font-semibold text-white cursor-pointer"
+                >
+                  Submit Another Demo Inquiry
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleBook} className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="pm-name" className="text-xs font-medium text-neutral-300">
+                    Full Name
+                  </label>
+                  <input
+                    id="pm-name"
+                    type="text"
+                    placeholder="Ayesha Khan"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="mt-1.5 w-full rounded-lg border border-white/15 bg-[#0E0D0C] px-3.5 py-2.5 text-sm text-white focus:border-[#D4AF37] focus:outline-none"
+                  />
                 </div>
-              ) : (
-                <form onSubmit={handleInquiry} className="space-y-4">
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label htmlFor="pv-name" className="block text-xs font-semibold text-neutral-700">
-                        Your Name
-                      </label>
-                      <input
-                        id="pv-name"
-                        type="text"
-                        value={inquiryName}
-                        onChange={(e) => setInquiryName(e.target.value)}
-                        placeholder="Marcus Chen"
-                        className="mt-1.5 w-full rounded-lg border border-[#E7E2DA] px-3.5 py-2.5 text-sm focus:border-[#9A3412] focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="pv-email" className="block text-xs font-semibold text-neutral-700">
-                        Work Email
-                      </label>
-                      <input
-                        id="pv-email"
-                        type="email"
-                        value={inquiryEmail}
-                        onChange={(e) => setInquiryEmail(e.target.value)}
-                        placeholder="marcus@company.com"
-                        className="mt-1.5 w-full rounded-lg border border-[#E7E2DA] px-3.5 py-2.5 text-sm focus:border-[#9A3412] focus:outline-none"
-                      />
-                    </div>
+                <div>
+                  <label htmlFor="pm-phone" className="text-xs font-medium text-neutral-300">
+                    WhatsApp / Phone
+                  </label>
+                  <input
+                    id="pm-phone"
+                    type="tel"
+                    placeholder="+92 321 555 0192"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="mt-1.5 w-full rounded-lg border border-white/15 bg-[#0E0D0C] px-3.5 py-2.5 text-sm text-white focus:border-[#D4AF37] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="pm-pkg" className="text-xs font-medium text-neutral-300">
+                    Package
+                  </label>
+                  <select
+                    id="pm-pkg"
+                    value={selectedPkg}
+                    onChange={(e) => setSelectedPkg(e.target.value)}
+                    className="mt-1.5 w-full rounded-lg border border-white/15 bg-[#0E0D0C] px-3.5 py-2.5 text-sm text-white focus:border-[#D4AF37] focus:outline-none"
+                  >
+                    {PACKAGES.map((p) => (
+                      <option key={p.id} value={p.name}>
+                        {p.name} — {formatPkr(p.pricePkr)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="pm-city" className="text-xs font-medium text-neutral-300">
+                      City
+                    </label>
+                    <select
+                      id="pm-city"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      className="mt-1.5 w-full rounded-lg border border-white/15 bg-[#0E0D0C] px-3 py-2.5 text-sm text-white focus:border-[#D4AF37] focus:outline-none"
+                    >
+                      <option>Lahore</option>
+                      <option>Islamabad</option>
+                      <option>Karachi</option>
+                      <option>Multan</option>
+                    </select>
                   </div>
                   <div>
-                    <label htmlFor="pv-msg" className="block text-xs font-semibold text-neutral-700">
-                      Project Brief
+                    <label htmlFor="pm-date" className="text-xs font-medium text-neutral-300">
+                      Event Date
                     </label>
-                    <textarea
-                      id="pv-msg"
-                      rows={4}
-                      value={inquiryMessage}
-                      onChange={(e) => setInquiryMessage(e.target.value)}
-                      placeholder="Scope, timeline, and goals..."
-                      className="mt-1.5 w-full rounded-lg border border-[#E7E2DA] px-3.5 py-2.5 text-sm focus:border-[#9A3412] focus:outline-none"
-                    />
+                    <div className="relative mt-1.5">
+                      <input
+                        id="pm-date"
+                        type="date"
+                        value={eventDate}
+                        onChange={(e) => setEventDate(e.target.value)}
+                        className="w-full rounded-lg border border-white/15 bg-[#0E0D0C] px-3 py-2.5 text-sm text-white focus:border-[#D4AF37] focus:outline-none"
+                      />
+                    </div>
                   </div>
-                  {inquiryError && (
-                    <p role="alert" className="text-xs font-medium text-red-700">
-                      {inquiryError}
-                    </p>
-                  )}
+                </div>
+                <div className="sm:col-span-2">
+                  <label htmlFor="pm-notes" className="text-xs font-medium text-neutral-300">
+                    Venue &amp; Story Notes
+                  </label>
+                  <textarea
+                    id="pm-notes"
+                    rows={3}
+                    placeholder="Share venue name, event timings, or custom portrait requirements..."
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    className="mt-1.5 w-full rounded-lg border border-white/15 bg-[#0E0D0C] px-3.5 py-2.5 text-sm text-white focus:border-[#D4AF37] focus:outline-none"
+                  />
+                </div>
+                {error && (
+                  <p role="alert" className="sm:col-span-2 text-xs text-rose-400">
+                    {error}
+                  </p>
+                )}
+                <div className="sm:col-span-2">
                   <button
                     type="submit"
-                    className="rounded-lg bg-[#9A3412] px-5 py-2.5 text-xs font-semibold text-white hover:bg-[#7C2D12] cursor-pointer"
+                    className="inline-flex items-center gap-2 rounded-lg bg-[#D4AF37] px-6 py-3 text-xs font-bold text-[#0E0D0C] hover:bg-[#E3C45B] cursor-pointer"
                   >
-                    Send Inquiry (Demo)
+                    <Calendar className="h-4 w-4" aria-hidden="true" />
+                    Send Booking Inquiry (Demo)
                   </button>
-                </form>
-              )}
-            </div>
+                </div>
+              </form>
+            )}
           </div>
         </section>
-      </main>
 
-      {/* Case Study Modal */}
-      {selectedProject && (
+        {/* Photography FAQ */}
+        <section className="space-y-6">
+          <div className="border-b border-white/10 pb-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#D4AF37]">
+              Booking &amp; Delivery Guide
+            </p>
+            <h2
+              className="mt-1 text-3xl font-semibold text-white"
+              style={{ fontFamily: '"Cormorant Garamond", serif' }}
+            >
+              Frequently Asked Questions
+            </h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {[
+              {
+                q: 'How far ahead should we reserve Lahore or Islamabad wedding dates?',
+                a: 'Winter Barat and Walima dates (November–February) typically book 3 to 5 months in advance.',
+              },
+              {
+                q: 'How soon do we receive color-graded digital galleries?',
+                a: 'Sneak-peek highlights arrive within 72 hours, with the full high-resolution gallery delivered in 3 weeks.',
+              },
+              {
+                q: 'Do you travel for destination weddings outside Lahore?',
+                a: 'Yes — we cover Islamabad, Karachi, Swat, and Bhurban with transparent nationwide travel logistics.',
+              },
+            ].map((item) => (
+              <div key={item.q} className="rounded-xl border border-white/10 bg-[#141311] p-5 space-y-2">
+                <h3 className="text-sm font-semibold text-white">{item.q}</h3>
+                <p className="text-xs leading-relaxed text-neutral-400">{item.a}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      {/* Studio Footer */}
+      <footer className="border-t border-white/10 bg-[#080807] text-neutral-400">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-4 text-xs">
+          <div className="md:col-span-2 space-y-2">
+            <p
+              className="text-2xl font-semibold text-white"
+              style={{ fontFamily: '"Cormorant Garamond", serif' }}
+            >
+              PIXEL MOMENTS
+            </p>
+            <p className="max-w-sm leading-relaxed">
+              Editorial wedding, portrait, and cultural event photography studio serving families
+              and creative brands across Lahore, Islamabad, and Karachi.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <p className="font-semibold text-white">Studio Navigation</p>
+            <ul className="space-y-1.5">
+              <li><a href="#pm-gallery" className="hover:text-[#D4AF37]">Photography Galleries</a></li>
+              <li><a href="#pm-packages" className="hover:text-[#D4AF37]">PKR Packages</a></li>
+              <li><a href="#pm-booking" className="hover:text-[#D4AF37]">Check Date Availability</a></li>
+            </ul>
+          </div>
+          <div className="space-y-2">
+            <p className="font-semibold text-white">Studios &amp; Contact</p>
+            <p>18-K Gulberg II, Lahore</p>
+            <p>F-7 Markaz, Islamabad</p>
+            <p className="text-[#D4AF37]">bookings@pixelmoments.pk</p>
+          </div>
+        </div>
+        <div className="border-t border-white/10 py-4 text-center text-[11px] text-neutral-500">
+          Pixel Moments Studio · Interactive Client Demonstration Website (Sample Content)
+        </div>
+      </footer>
+
+      {/* Lightbox Viewer */}
+      {lightboxItem && (
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4"
-          onClick={() => setSelectedProject(null)}
+          aria-label={lightboxItem.title}
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/90 p-4"
+          onClick={() => setLightboxItem(null)}
         >
           <div
-            className="relative max-h-[88vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-6 md:p-8"
+            className="relative max-w-4xl w-full rounded-2xl border border-white/15 bg-[#121110] p-5 sm:p-7"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"
-              aria-label="Close project case study"
-              onClick={() => setSelectedProject(null)}
-              className="absolute right-5 top-5 rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 cursor-pointer"
+              onClick={() => setLightboxItem(null)}
+              aria-label="Close lightbox"
+              className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-white hover:border-[#D4AF37] cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9A3412]">
-              {selectedProject.discipline} · {selectedProject.year}
+            <p className="text-xs text-[#D4AF37]">
+              {lightboxItem.category} · {lightboxItem.location} · {lightboxItem.date}
             </p>
             <h3
-              className="mt-2 text-2xl font-semibold"
+              className="mt-1 text-2xl font-semibold text-white"
               style={{ fontFamily: '"Cormorant Garamond", serif' }}
             >
-              {selectedProject.title}
+              {lightboxItem.title}
             </h3>
-            <p className="mt-1 text-xs text-neutral-500">Client: {selectedProject.client}</p>
-            <div className="mt-4 aspect-[16/10] overflow-hidden rounded-xl">
+            <div className="mt-4 aspect-[16/10] overflow-hidden rounded-xl border border-white/10">
               <ResilientImage
-                src={selectedProject.image}
-                alt={selectedProject.title}
+                src={lightboxItem.image}
+                alt={lightboxItem.title}
                 className="h-full w-full object-cover"
+                fallbackLabel={lightboxItem.title}
               />
             </div>
-            <p className="mt-4 text-sm leading-relaxed text-neutral-700">
-              {selectedProject.summary}
-            </p>
-            <div className="mt-4 rounded-xl bg-[#FAF8F5] p-4 text-sm">
-              <span className="font-semibold text-neutral-900">Outcome: </span>
-              <span className="text-[#9A3412] font-semibold">{selectedProject.impact}</span>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-4 text-xs text-neutral-300">
+              <p className="max-w-xl">{lightboxItem.story}</p>
+              <p className="font-mono text-[#D4AF37]">{lightboxItem.cameraSpec}</p>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Add Project Modal */}
-      {showAddModal && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4"
-          onClick={() => setShowAddModal(false)}
-        >
-          <form
-            onSubmit={handleAddProject}
-            className="w-full max-w-md space-y-4 rounded-2xl bg-white p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Add Portfolio Project</h3>
-              <button
-                type="button"
-                aria-label="Close modal"
-                onClick={() => setShowAddModal(false)}
-                className="rounded p-1 hover:bg-neutral-100 cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div>
-              <label htmlFor="new-proj-title" className="block text-xs font-semibold text-neutral-700">
-                Project Title
-              </label>
-              <input
-                id="new-proj-title"
-                required
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="Atelier Nine Digital Storefront"
-                className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="new-proj-client" className="block text-xs font-semibold text-neutral-700">
-                  Client
-                </label>
-                <input
-                  id="new-proj-client"
-                  required
-                  value={newClient}
-                  onChange={(e) => setNewClient(e.target.value)}
-                  placeholder="Atelier Nine"
-                  className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label htmlFor="new-proj-disc" className="block text-xs font-semibold text-neutral-700">
-                  Discipline
-                </label>
-                <select
-                  id="new-proj-disc"
-                  value={newDiscipline}
-                  onChange={(e) =>
-                    setNewDiscipline(e.target.value as PortfolioProject['discipline'])
-                  }
-                  className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
-                >
-                  <option>Brand Systems</option>
-                  <option>Product Design</option>
-                  <option>Editorial</option>
-                  <option>Web Architecture</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label htmlFor="new-proj-impact" className="block text-xs font-semibold text-neutral-700">
-                Measured Outcome
-              </label>
-              <input
-                id="new-proj-impact"
-                value={newImpact}
-                onChange={(e) => setNewImpact(e.target.value)}
-                placeholder="+34% Conversion Rate"
-                className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label htmlFor="new-proj-summary" className="block text-xs font-semibold text-neutral-700">
-                Summary
-              </label>
-              <textarea
-                id="new-proj-summary"
-                required
-                rows={3}
-                value={newSummary}
-                onChange={(e) => setNewSummary(e.target.value)}
-                placeholder="Project overview..."
-                className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full rounded-lg bg-[#9A3412] py-2.5 text-xs font-semibold text-white hover:bg-[#7C2D12] cursor-pointer"
-            >
-              Publish to Gallery
-            </button>
-          </form>
         </div>
       )}
     </div>
